@@ -1,0 +1,161 @@
+/* PR#6 panel/readability fixes: softer focus textures, fixed sidebar and cheaper responsive effects */
+@layer base {
+  body {
+    background: var(--card) !important;
+    background-image: none !important;
+  }
+}
+
+@layer components {
+  /* Sidebar must stay pinned while only the main banking surface scrolls. */
+  @media (min-width: 1024px) {
+    aside.hidden.w-64.shrink-0.border-r-2 {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      max-height: 100svh;
+      align-self: flex-start;
+      overflow: hidden;
+    }
+
+    aside.hidden.w-64.shrink-0.border-r-2 nav,
+    aside.hidden.w-64.shrink-0.border-r-2 > div:last-child {
+      flex-shrink: 0;
+    }
+  }
+
+  /* The pixel shader/pattern was too aggressive on transfer panels. Keep it as a hover/focus affordance, not as a permanent background. */
+  .pixel-card::before,
+  .pixel-surface::before,
+  .pixel-btn::before,
+  .pixel-gradient::before,
+  .payment-hero-card::before,
+  .receipt-glow-ring::before {
+    opacity: 0 !important;
+    mix-blend-mode: normal;
+    filter: saturate(0.82) contrast(0.9);
+  }
+
+  .pixel-card:hover::before,
+  .pixel-card:focus-within::before,
+  .pixel-surface:hover::before,
+  .pixel-surface:focus-within::before,
+  .pixel-btn:hover::before,
+  .pixel-btn:focus-visible::before,
+  .pixel-gradient:hover::before,
+  .pixel-gradient:focus-within::before,
+  .payment-hero-card:hover::before,
+  .payment-hero-card:focus-within::before {
+    opacity: 0.055 !important;
+    filter: saturate(0.72) contrast(0.82);
+    transition:
+      opacity 0.18s ease,
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      background-position 0.48s steps(5, end);
+  }
+
+  html[data-pixel-gradients="true"] .pixel-card:hover::before,
+  html[data-pixel-gradients="true"] .pixel-card:focus-within::before,
+  html[data-pixel-gradients="true"] .pixel-btn:hover::before,
+  html[data-pixel-gradients="true"] .pixel-btn:focus-visible::before,
+  html[data-pixel-gradients="true"] .pixel-gradient:hover::before,
+  html[data-pixel-gradients="true"] .pixel-gradient:focus-within::before {
+    opacity: 0.07 !important;
+  }
+
+  .dark .pixel-card:hover::before,
+  .dark .pixel-card:focus-within::before,
+  .dark .pixel-surface:hover::before,
+  .dark .pixel-surface:focus-within::before,
+  .dark .pixel-btn:hover::before,
+  .dark .pixel-btn:focus-visible::before,
+  .dark .pixel-gradient:hover::before,
+  .dark .pixel-gradient:focus-within::before,
+  .dark .payment-hero-card:hover::before,
+  .dark .payment-hero-card:focus-within::before {
+    opacity: 0.035 !important;
+    filter: saturate(0.48) contrast(0.72) brightness(0.94);
+  }
+
+  .pixel-gradient,
+  .payment-hero-card {
+    background-image: none !important;
+  }
+
+  .pixel-gradient:hover,
+  .pixel-gradient:focus-within,
+  .payment-hero-card:hover,
+  .payment-hero-card:focus-within {
+    background-image:
+      radial-gradient(circle at 92% 12%, color-mix(in oklch, var(--primary) 5%, transparent), transparent 28%),
+      linear-gradient(135deg, color-mix(in oklch, var(--primary) 2.8%, transparent), transparent 52%) !important;
+  }
+
+  /* Glow stays neo-brutal, but stops blooming over text-heavy panels. */
+  html[data-neo-glow="true"] .pixel-card,
+  html[data-neo-glow="true"] .pixel-surface {
+    box-shadow:
+      var(--neo-shadow, 5px 5px 0 0 var(--foreground)),
+      0 0 14px color-mix(in oklch, var(--primary) 10%, transparent) !important;
+  }
+
+  html[data-neo-glow="true"] .pixel-card:hover,
+  html[data-neo-glow="true"] .pixel-card:focus-within,
+  html[data-neo-glow="true"] .pixel-surface:hover,
+  html[data-neo-glow="true"] .pixel-surface:focus-within {
+    box-shadow:
+      var(--neo-shadow-hover, 7px 7px 0 0 var(--foreground)),
+      0 0 18px color-mix(in oklch, var(--primary) 15%, transparent) !important;
+  }
+
+  /* Cheaper motion on mobile/tablet: fixes the main likely performance issue from the heavy panel shader. */
+  @media (max-width: 1023px) {
+    .pixel-card::before,
+    .pixel-surface::before,
+    .pixel-btn::before,
+    .pixel-gradient::before,
+    .payment-hero-card::before {
+      background-size: 36px 36px, 28px 28px, auto !important;
+      transition: opacity 0.16s ease, transform 0.18s ease !important;
+    }
+
+    .pixel-card:hover::before,
+    .pixel-card:focus-within::before,
+    .pixel-surface:hover::before,
+    .pixel-surface:focus-within::before,
+    .pixel-btn:hover::before,
+    .pixel-btn:focus-visible::before,
+    .pixel-gradient:hover::before,
+    .pixel-gradient:focus-within::before,
+    .payment-hero-card:hover::before,
+    .payment-hero-card:focus-within::before {
+      opacity: 0.035 !important;
+      background-position: 0 0 !important;
+    }
+
+    .neo-topbar::before {
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+      opacity: 0.62 !important;
+    }
+
+    .neo-topbar:hover::before,
+    .neo-topbar:focus-within::before {
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      opacity: 0.76 !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce), (update: slow) {
+    .pixel-card::before,
+    .pixel-surface::before,
+    .pixel-btn::before,
+    .pixel-gradient::before,
+    .payment-hero-card::before {
+      transition: opacity 0.12s ease !important;
+      background-position: 0 0 !important;
+      transform: none !important;
+    }
+  }
+}
