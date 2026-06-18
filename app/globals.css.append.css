@@ -1,5 +1,4 @@
-
-/* Pixel-system enforcement: one visual language and obvious click targets */
+/* Pixel-system enforcement: one visual language, SPA-feeling transitions, skeleton states and custom cursor */
 @layer base {
   button,
   a,
@@ -17,6 +16,13 @@
   textarea {
     cursor: text;
   }
+
+  html.pixel-cursor-enabled,
+  html.pixel-cursor-enabled *,
+  html.pixel-cursor-enabled *::before,
+  html.pixel-cursor-enabled *::after {
+    cursor: none !important;
+  }
 }
 
 @layer components {
@@ -25,9 +31,30 @@
     background: var(--card);
   }
 
+  .pixel-pressable {
+    transition:
+      transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      opacity 0.18s ease;
+  }
+
+  .pixel-pressable:hover {
+    transform: translate(-1px, -1px);
+  }
+
+  .pixel-pressable:active {
+    transform: translate(2px, 2px);
+  }
+
   .pixel-skeleton {
     position: relative;
     overflow: hidden;
+    background-image:
+      linear-gradient(45deg, color-mix(in oklch, var(--foreground) 6%, transparent) 25%, transparent 25%),
+      linear-gradient(-45deg, color-mix(in oklch, var(--foreground) 6%, transparent) 25%, transparent 25%);
+    background-size: 12px 12px;
   }
 
   .pixel-skeleton::after {
@@ -35,8 +62,8 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--foreground) 12%, transparent), transparent);
-    animation: pixel-skeleton-scan 1.1s steps(8, end) infinite;
+    background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--foreground) 14%, transparent), transparent);
+    animation: pixel-skeleton-scan 1.05s steps(9, end) infinite;
   }
 
   .pixel-loader {
@@ -51,6 +78,7 @@
     height: 46px;
     border: 2px solid var(--foreground);
     background: var(--primary);
+    transform-origin: bottom;
     animation: pixel-loader-bar 0.8s steps(4, end) infinite;
   }
 
@@ -64,6 +92,117 @@
 
   .pixel-loader span:nth-child(4) {
     animation-delay: 0.36s;
+  }
+
+  .pixel-loader--coin {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border: 2px solid var(--foreground);
+    background: var(--card);
+    box-shadow: 5px 5px 0 0 var(--foreground);
+  }
+
+  .pixel-loader--coin::before,
+  .pixel-loader--coin::after {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 2px solid var(--foreground);
+    background: var(--primary);
+    animation: pixel-coin-flip 0.9s steps(5, end) infinite;
+  }
+
+  .pixel-loader--coin::after {
+    inset: 24px;
+    background: var(--card);
+    animation-delay: 0.2s;
+  }
+
+  .pixel-loader--dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pixel-loader--dots span {
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--foreground);
+    background: var(--primary);
+    animation: pixel-dot-jump 0.75s steps(3, end) infinite;
+  }
+
+  .pixel-loader--dots span:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+
+  .pixel-loader--dots span:nth-child(3) {
+    animation-delay: 0.24s;
+  }
+
+  .pixel-cursor {
+    position: fixed;
+    z-index: 2147483647;
+    left: 0;
+    top: 0;
+    width: 54px;
+    height: 54px;
+    pointer-events: none;
+    transform: translate3d(-120px, -120px, 0);
+    transition: opacity 0.12s ease, filter 0.12s ease;
+    will-change: transform;
+  }
+
+  .pixel-cursor--hidden {
+    opacity: 0;
+  }
+
+  .pixel-cursor__grid {
+    display: grid;
+    grid-template-columns: repeat(9, 6px);
+    grid-template-rows: repeat(9, 6px);
+    filter: drop-shadow(2px 2px 0 var(--background));
+  }
+
+  .pixel-cursor__cell {
+    width: 6px;
+    height: 6px;
+    background: var(--foreground);
+  }
+
+  .pixel-cursor__cell--empty {
+    width: 6px;
+    height: 6px;
+  }
+
+  .pixel-cursor__pulse {
+    position: absolute;
+    left: 24px;
+    top: 24px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--foreground);
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  .pixel-cursor[data-interactive="true"] .pixel-cursor__cell {
+    background: var(--primary);
+    box-shadow: inset 0 0 0 1px var(--foreground);
+  }
+
+  .pixel-cursor[data-interactive="true"] .pixel-cursor__pulse {
+    opacity: 0.8;
+    animation: pixel-cursor-pulse 0.65s steps(4, end) infinite;
+  }
+
+  .pixel-cursor[data-pressed="true"] {
+    filter: brightness(0.85);
+  }
+
+  .pixel-cursor[data-pressed="true"] .pixel-cursor__grid {
+    transform: translate(2px, 2px);
   }
 }
 
@@ -80,6 +219,52 @@
   }
   50% {
     transform: scaleY(1);
+  }
+}
+
+@keyframes pixel-coin-flip {
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.2);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes pixel-dot-jump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pixel-cursor-pulse {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes view-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.995);
+    filter: saturate(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: saturate(1);
   }
 }
 
@@ -105,10 +290,29 @@
   }
 }
 
+.animate-view-enter {
+  animation: view-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .animate-transfer-in {
-  animation: transfer-in 0.22s steps(5, end) both;
+  animation: transfer-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-transfer-back {
   animation-name: transfer-back;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-view-enter,
+  .animate-transfer-in,
+  .animate-transfer-back,
+  .pixel-loader span,
+  .pixel-loader--coin::before,
+  .pixel-loader--coin::after,
+  .pixel-loader--dots span,
+  .pixel-skeleton::after,
+  .pixel-cursor__pulse {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

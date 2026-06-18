@@ -1,7 +1,9 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Press_Start_2P } from 'next/font/google'
+import { PixelCursor } from '@/components/banking/pixel-cursor'
 import './globals.css'
+import './globals.css.append.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({
@@ -53,6 +55,7 @@ export default function RootLayout({
       className={`light ${geistSans.variable} ${geistMono.variable} ${pressStart.variable} bg-background`}
     >
       <body className="font-sans antialiased">
+        <PixelCursor />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
