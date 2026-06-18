@@ -1,7 +1,18 @@
 "use client"
 
 import NumberFlow from "@number-flow/react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+
+const usdFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+const numberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+})
 
 type Props = {
   value: number
@@ -16,8 +27,9 @@ type Props = {
 }
 
 /**
- * NumberFlow-powered animated figure. Pairs with the pixel display font so
- * digits roll/flip in chunky 8-bit style. Values animate whenever they change.
+ * NumberFlow-powered animated figure. The static first render intentionally
+ * matches SSR output; NumberFlow mounts only after hydration, preventing the
+ * client/server text mismatch that animated number libraries can trigger.
  */
 export function AnimatedAmount({
   value,
@@ -27,22 +39,36 @@ export function AnimatedAmount({
   animateOnMount = false,
   suffix,
 }: Props) {
-  const [display, setDisplay] = useState(animateOnMount ? 0 : value)
+  const [mounted, setMounted] = useState(false)
+  const [display, setDisplay] = useState(value)
+
+  const format: Intl.NumberFormatOptions = useMemo(() => {
+    const options: Intl.NumberFormatOptions = currency
+      ? { style: "currency", currency: "USD", maximumFractionDigits: 2 }
+      : { maximumFractionDigits: 2 }
+    if (sign) options.signDisplay = "always"
+    return options
+  }, [currency, sign])
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     if (animateOnMount) {
+      setDisplay(0)
       const id = requestAnimationFrame(() => setDisplay(value))
       return () => cancelAnimationFrame(id)
     }
     setDisplay(value)
-  }, [value, animateOnMount])
+  }, [value, animateOnMount, mounted])
 
-  const format: Intl.NumberFormatOptions = currency
-    ? { style: "currency", currency: "USD", maximumFractionDigits: 2 }
-    : { maximumFractionDigits: 2 }
-  if (sign) format.signDisplay = "always"
+  if (!mounted) {
+    const formatted = currency ? usdFormatter.format(value) : numberFormatter.format(value)
+    const signed = sign && value > 0 ? `+${formatted}` : formatted
+    return <span className={className}>{signed}{suffix}</span>
+  }
 
-  return (
-    <NumberFlow value={display} format={format} suffix={suffix} className={className} />
-  )
+  return <NumberFlow value={display} format={format} suffix={suffix} className={className} />
 }
