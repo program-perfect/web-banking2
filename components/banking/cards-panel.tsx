@@ -1,15 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Snowflake, Wifi, MoreHorizontal } from "lucide-react"
+import { Snowflake, Wifi } from "lucide-react"
 import { cards as initialCards, formatUsd, type CardItem } from "@/lib/bank-data"
 import { BrandMark } from "./brand-mark"
 import { cn } from "@/lib/utils"
 
 const variantClasses: Record<CardItem["variant"], string> = {
-  ton: "bg-primary text-primary-foreground",
-  dark: "bg-foreground text-background",
-  primary: "bg-secondary text-foreground border border-border",
+  brand: "bg-primary text-primary-foreground",
+  ink: "bg-foreground text-background",
+  ghost: "border-2 border-foreground bg-secondary text-foreground",
 }
 
 export function CardsPanel() {
