@@ -1,0 +1,260 @@
+/* PR #6 visibility fix: transfer success celebration must render above receipt cards */
+@layer components {
+  .transfer-celebration {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .transfer-celebration::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 50% 44%, color-mix(in oklch, var(--primary) 28%, transparent) 0 2px, transparent 3px),
+      radial-gradient(circle at 36% 52%, color-mix(in oklch, var(--accent) 22%, transparent) 0 2px, transparent 3px),
+      radial-gradient(circle at 68% 46%, color-mix(in oklch, var(--chart-2) 20%, transparent) 0 2px, transparent 3px);
+    opacity: 0;
+    animation: transfer-celebration-flash 1.2s steps(7, end) both;
+  }
+
+  .pixel-firework,
+  .pixel-coin-burst,
+  .pixel-confetti {
+    position: absolute;
+    z-index: 2;
+    display: block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--foreground);
+    background: var(--primary);
+    box-shadow: 3px 3px 0 0 var(--foreground);
+    image-rendering: pixelated;
+    will-change: transform, opacity;
+  }
+
+  .pixel-firework {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    transform: scale(0.1);
+    animation: pixel-firework-burst 1.45s steps(8, end) both;
+  }
+
+  .pixel-firework::before,
+  .pixel-firework::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border: 1px solid var(--foreground);
+    background: var(--accent);
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 -56px 0 0 var(--primary),
+      40px -40px 0 0 var(--chart-2),
+      56px 0 0 0 var(--primary),
+      40px 40px 0 0 var(--chart-4),
+      0 56px 0 0 var(--accent),
+      -40px 40px 0 0 var(--chart-3),
+      -56px 0 0 0 var(--primary),
+      -40px -40px 0 0 var(--chart-5);
+  }
+
+  .pixel-firework::after {
+    width: 5px;
+    height: 5px;
+    background: var(--card);
+    transform: translate(-50%, -50%) rotate(22deg);
+    box-shadow:
+      0 -82px 0 0 var(--foreground),
+      58px -58px 0 0 var(--primary),
+      82px 0 0 0 var(--foreground),
+      58px 58px 0 0 var(--accent),
+      0 82px 0 0 var(--foreground),
+      -58px 58px 0 0 var(--primary),
+      -82px 0 0 0 var(--foreground),
+      -58px -58px 0 0 var(--accent);
+  }
+
+  .pixel-coin-burst {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--accent);
+    animation: pixel-coin-rise 1.65s steps(9, end) both;
+  }
+
+  .pixel-coin-burst::before,
+  .pixel-coin-burst::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 2px solid var(--foreground);
+    border-radius: 999px;
+    background: var(--primary);
+    box-shadow:
+      -42px -34px 0 -2px var(--primary),
+      38px -46px 0 -2px var(--accent),
+      54px -10px 0 -2px var(--chart-4),
+      -52px 8px 0 -2px var(--chart-2);
+  }
+
+  .pixel-coin-burst::after {
+    inset: 7px;
+    background: var(--card);
+    box-shadow:
+      -70px -70px 0 -2px var(--foreground),
+      70px -70px 0 -2px var(--foreground),
+      78px 24px 0 -2px var(--foreground),
+      -84px 28px 0 -2px var(--foreground);
+  }
+
+  .pixel-confetti {
+    width: 8px;
+    height: 18px;
+    border-radius: 2px;
+    background: var(--primary);
+    animation: pixel-confetti-fall 1.85s steps(10, end) both;
+  }
+
+  .pixel-confetti::before,
+  .pixel-confetti::after {
+    content: "";
+    position: absolute;
+    top: -28px;
+    width: 8px;
+    height: 16px;
+    border: 2px solid var(--foreground);
+    background: var(--accent);
+    box-shadow:
+      38px 18px 0 0 var(--primary),
+      74px -2px 0 0 var(--chart-2),
+      118px 26px 0 0 var(--chart-4),
+      -34px 14px 0 0 var(--chart-3),
+      -82px -8px 0 0 var(--primary),
+      -124px 24px 0 0 var(--accent);
+  }
+
+  .pixel-confetti::after {
+    top: 34px;
+    transform: rotate(90deg);
+    background: var(--card);
+    box-shadow:
+      28px 24px 0 0 var(--foreground),
+      66px -12px 0 0 var(--primary),
+      106px 34px 0 0 var(--accent),
+      -30px -8px 0 0 var(--chart-2),
+      -76px 28px 0 0 var(--chart-4),
+      -116px 0 0 0 var(--foreground);
+  }
+
+  .receipt-glow-ring {
+    z-index: 3;
+  }
+}
+
+@keyframes transfer-celebration-flash {
+  0% { opacity: 0; }
+  12% { opacity: 0.62; }
+  38% { opacity: 0.25; }
+  100% { opacity: 0; }
+}
+
+@keyframes pixel-firework-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.1) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(0.65) rotate(0deg);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1.18) rotate(12deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.34) rotate(20deg);
+  }
+}
+
+@keyframes pixel-coin-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.6) rotate(0deg);
+  }
+  16% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(-88px) scale(1.08) rotate(18deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-136px) scale(0.9) rotate(28deg);
+  }
+}
+
+@keyframes pixel-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-44px) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 1;
+    transform: translateY(68vh) rotate(18deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(86vh) rotate(28deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .pixel-firework::before {
+    box-shadow:
+      0 -42px 0 0 var(--primary),
+      30px -30px 0 0 var(--chart-2),
+      42px 0 0 0 var(--primary),
+      30px 30px 0 0 var(--chart-4),
+      0 42px 0 0 var(--accent),
+      -30px 30px 0 0 var(--chart-3),
+      -42px 0 0 0 var(--primary),
+      -30px -30px 0 0 var(--chart-5);
+  }
+
+  .pixel-firework::after {
+    box-shadow:
+      0 -60px 0 0 var(--foreground),
+      44px -44px 0 0 var(--primary),
+      60px 0 0 0 var(--foreground),
+      44px 44px 0 0 var(--accent),
+      0 60px 0 0 var(--foreground),
+      -44px 44px 0 0 var(--primary),
+      -60px 0 0 0 var(--foreground),
+      -44px -44px 0 0 var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transfer-celebration,
+  .transfer-celebration::before,
+  .pixel-firework,
+  .pixel-coin-burst,
+  .pixel-confetti {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
