@@ -17,14 +17,17 @@ import {
   Repeat,
   Send,
   Share2,
+  ShieldCheck,
+  Sparkles,
   UserRound,
   Wallet,
 } from "lucide-react"
 import { Topbar } from "@/components/banking/topbar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { contacts, formatUsd } from "@/lib/bank-data"
+import { accounts, contacts, formatUsd } from "@/lib/bank-data"
 import { cn } from "@/lib/utils"
-import { PixelButton, PixelCard, PixelInput, PixelSkeleton, PixelStatus } from "@/components/banking/pixel-ui"
+import { useAppPreferences } from "@/components/banking/app-preferences"
+import { PixelAmount, PixelButton, PixelCard, PixelInput, PixelLoader, PixelSkeleton, PixelStatus } from "@/components/banking/pixel-ui"
 
 type TransferStep = "recipient" | "amount" | "review" | "processing" | "success"
 type RecipientMethod = "contact" | "card" | "phone"
@@ -43,6 +46,8 @@ type TransferRecord = {
   operationCode: string
   bank: string
   purpose: string
+  riskScore: string
+  speed: string
 }
 
 const existingTransfers: Record<string, TransferRecord> = {
@@ -56,10 +61,12 @@ const existingTransfers: Record<string, TransferRecord> = {
     fee: 0,
     source: "Main account · **** 4921",
     status: "pending",
-    createdAt: "Yesterday, 18:40",
+    createdAt: "Вчера, 18:40",
     operationCode: "VX-2026-OP1-8842",
     bank: "VOXEL Internal Rail",
     purpose: "Private transfer",
+    riskScore: "Low",
+    speed: "Instant",
   },
   "op-2": {
     id: "op-2",
@@ -71,10 +78,12 @@ const existingTransfers: Record<string, TransferRecord> = {
     fee: 0,
     source: "Main account · **** 4921",
     status: "completed",
-    createdAt: "Jun 17, 11:12",
+    createdAt: "17 июн, 11:12",
     operationCode: "VX-2026-OP2-3811",
     bank: "External card network",
     purpose: "Card-to-card transfer",
+    riskScore: "Low",
+    speed: "Up to 2 min",
   },
   "op-3": {
     id: "op-3",
@@ -86,17 +95,21 @@ const existingTransfers: Record<string, TransferRecord> = {
     fee: 0,
     source: "Main account · **** 4921",
     status: "completed",
-    createdAt: "Jun 16, 09:05",
+    createdAt: "16 июн, 09:05",
     operationCode: "VX-2026-OP3-1297",
     bank: "Phone lookup rail",
     purpose: "Phone transfer",
+    riskScore: "Low",
+    speed: "Instant",
   },
 }
 
 const stepOrder: TransferStep[] = ["recipient", "amount", "review", "processing", "success"]
+const keypad = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"]
 
 export function TransferFlowPage({ transferId }: { transferId: string }) {
   const router = useRouter()
+  const { profileName, t } = useAppPreferences()
   const transferFromHistory = existingTransfers[transferId]
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState<TransferStep>(transferFromHistory ? "success" : "recipient")
@@ -105,31 +118,35 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
   const [selectedContact, setSelectedContact] = useState(contacts[0]?.id ?? "")
   const [cardNumber, setCardNumber] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [amount, setAmount] = useState(250)
+  const [amountInput, setAmountInput] = useState("250")
   const [purpose, setPurpose] = useState("Private transfer")
   const [showReceipt, setShowReceipt] = useState(Boolean(transferFromHistory))
 
   const operationCode = useMemo(() => `VX-${transferId.toUpperCase().replace(/[^A-Z0-9]/g, "-")}`, [transferId])
   const contact = contacts.find((item) => item.id === selectedContact) ?? contacts[0]
+  const amount = Math.max(0, Number(amountInput) || 0)
+  const sourceAccount = accounts[0]
 
   const draft: TransferRecord = transferFromHistory ?? {
     id: transferId,
-    recipient: method === "contact" ? contact?.name ?? "Recipient" : method === "card" ? "Card recipient" : "Phone recipient",
-    recipientHandle: method === "contact" ? contact?.handle ?? "@recipient" : method === "card" ? maskCard(cardNumber) : phoneNumber || "+1 ___ ___ ____",
+    recipient: method === "contact" ? contact?.name ?? "Recipient" : method === "card" ? t("Получатель по карте", "Card recipient") : t("Получатель по телефону", "Phone recipient"),
+    recipientHandle: method === "contact" ? contact?.handle ?? "@recipient" : method === "card" ? maskCard(cardNumber) : phoneNumber || "+_ ___ ___ ____",
     initials: method === "contact" ? contact?.initials ?? "RX" : method === "card" ? "CR" : "PH",
     method,
     amount,
-    fee: 0,
-    source: "Main account · **** 4921",
+    fee: method === "contact" ? 0 : 0.35,
+    source: `${sourceAccount.name} · ${sourceAccount.number}`,
     status: step === "success" ? "completed" : "pending",
-    createdAt: step === "success" ? "Just now" : "Draft",
+    createdAt: step === "success" ? t("Только что", "Just now") : t("Черновик", "Draft"),
     operationCode,
     bank: method === "contact" ? "VOXEL Internal Rail" : method === "card" ? "External card network" : "Phone lookup rail",
     purpose,
+    riskScore: "Low",
+    speed: method === "card" ? "Up to 2 min" : "Instant",
   }
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 520)
+    const timer = window.setTimeout(() => setLoading(false), 460)
     return () => window.clearTimeout(timer)
   }, [])
 
@@ -139,7 +156,7 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
       setDirection(1)
       setShowReceipt(true)
       setStep("success")
-    }, 1800)
+    }, 1900)
     return () => window.clearTimeout(timer)
   }, [step])
 
@@ -154,15 +171,17 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
       router.push("/")
       return
     }
-
-    const previous = stepOrder[currentIndex - 1]
-    if (previous === "processing") {
-      setStep("review")
-      return
-    }
-
     setDirection(-1)
-    setStep(previous)
+    setStep(stepOrder[Math.max(0, currentIndex - 1)] === "processing" ? "review" : stepOrder[Math.max(0, currentIndex - 1)])
+  }
+
+  function pressKey(key: string) {
+    setAmountInput((current) => {
+      if (key === "⌫") return current.slice(0, -1) || "0"
+      if (key === "." && current.includes(".")) return current
+      const next = current === "0" && key !== "." ? key : current + key
+      return next.replace(/^0+(?=\d)/, "").slice(0, 9)
+    })
   }
 
   const canContinue =
@@ -171,19 +190,20 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
     (method === "phone" && phoneNumber.replace(/\D/g, "").length >= 7)
 
   return (
-    <div className="min-h-svh bg-background">
+    <div className="min-h-svh bg-background neo-mobile-shell">
       <Topbar />
 
       <header className="border-b-2 border-foreground bg-background px-4 py-3 md:px-6">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
           <PixelButton onClick={goBack}>
             <ArrowLeft className="h-4 w-4" />
-            Назад
+            {t("Назад", "Back")}
           </PixelButton>
-          <div className="text-right">
-            <p className="font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Transfer slug</p>
-            <p className="text-sm font-semibold text-foreground">{transferId}</p>
+          <div className="text-center">
+            <p className="font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">{t("Операция", "Operation")}</p>
+            <p className="text-sm font-black text-foreground">{transferId}</p>
           </div>
+          <PixelStatus tone="info">{profileName}</PixelStatus>
         </div>
       </header>
 
@@ -191,82 +211,62 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
         {loading ? (
           <TransferSkeleton />
         ) : (
-          <div key={step} className={cn("animate-transfer-in", direction < 0 && "animate-transfer-back")}>
+          <div key={step} className={cn("animate-transfer-in", direction < 0 && "animate-transfer-back")}> 
             {transferFromHistory ? (
-              <TransferReceipt record={draft} showReceipt={showReceipt} setShowReceipt={setShowReceipt} />
+              <TransferReceipt record={draft} showReceipt={showReceipt} setShowReceipt={setShowReceipt} completed />
             ) : (
               <>
                 <ProgressBar step={step} />
 
                 {step === "recipient" && (
-                  <PixelCard eyebrow="Step 1" title="Choose recipient">
+                  <PixelCard eyebrow={t("Шаг 1", "Step 1")} title={t("Кому переводим", "Choose recipient")} className="payment-hero-card pixel-gradient">
                     <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
                       <div className="grid gap-3">
-                        <MethodButton active={method === "contact"} icon={UserRound} label="Из контактов" onClick={() => setMethod("contact")} />
-                        <MethodButton active={method === "card"} icon={CreditCard} label="Номер карты" onClick={() => setMethod("card")} />
-                        <MethodButton active={method === "phone"} icon={Phone} label="Телефон" onClick={() => setMethod("phone")} />
+                        <MethodButton active={method === "contact"} icon={UserRound} label={t("Из контактов", "Contacts")} onClick={() => setMethod("contact")} />
+                        <MethodButton active={method === "card"} icon={CreditCard} label={t("Номер карты", "Card number")} onClick={() => setMethod("card")} />
+                        <MethodButton active={method === "phone"} icon={Phone} label={t("Телефон", "Phone")} onClick={() => setMethod("phone")} />
                       </div>
 
-                      <div className="border-2 border-foreground bg-secondary p-4">
+                      <div className="border-2 border-foreground bg-secondary p-4 pixel-shadow-sm">
                         {method === "contact" && (
                           <div className="grid gap-3 sm:grid-cols-2">
-                            {contacts.map((item) => {
-                              const active = selectedContact === item.id
-                              return (
-                                <button
-                                  key={item.id}
-                                  onClick={() => setSelectedContact(item.id)}
-                                  className={cn(
-                                    "flex cursor-pointer items-center gap-3 border-2 p-3 text-left transition-all",
-                                    active ? "border-foreground bg-accent pixel-shadow-sm" : "border-foreground bg-card hover:bg-secondary",
-                                  )}
-                                >
-                                  <Avatar className="h-11 w-11 rounded-none">
-                                    <AvatarFallback className="rounded-none bg-primary font-pixel text-[10px] text-primary-foreground">
-                                      {item.initials}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span>
-                                    <span className="block text-sm font-semibold text-foreground">{item.name}</span>
-                                    <span className="block text-xs text-muted-foreground">{item.handle}</span>
-                                  </span>
-                                </button>
-                              )
-                            })}
+                            {contacts.map((item) => (
+                              <button key={item.id} onClick={() => setSelectedContact(item.id)} className={cn("flex min-h-20 cursor-pointer items-center gap-3 border-2 p-3 text-left transition-all", selectedContact === item.id ? "border-foreground bg-accent pixel-shadow-sm" : "border-foreground bg-card hover:bg-secondary")}>
+                                <Avatar className="h-11 w-11 rounded-none border-2 border-foreground">
+                                  <AvatarFallback className="rounded-none bg-primary font-pixel text-[10px] text-primary-foreground">{item.initials}</AvatarFallback>
+                                </Avatar>
+                                <span>
+                                  <span className="block text-sm font-black text-foreground">{item.name}</span>
+                                  <span className="block text-xs text-muted-foreground">{item.handle} · VOXEL verified</span>
+                                </span>
+                              </button>
+                            ))}
                           </div>
                         )}
 
                         {method === "card" && (
                           <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Card number</span>
-                            <PixelInput
-                              value={cardNumber}
-                              onChange={(event) => setCardNumber(formatCard(event.target.value))}
-                              placeholder="0000 0000 0000 0000"
-                              className="mt-2 text-lg font-semibold tabular-nums"
-                            />
-                            <p className="mt-2 text-xs text-muted-foreground">The card will be checked before confirmation.</p>
+                            <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("Номер карты", "Card number")}</span>
+                            <PixelInput value={cardNumber} onChange={(event) => setCardNumber(formatCard(event.target.value))} placeholder="0000 0000 0000 0000" className="mt-2 text-lg font-black tabular-nums" />
+                            <p className="mt-2 text-xs text-muted-foreground">{t("Проверим банк, лимит, риск и комиссию перед подтверждением.", "We check bank, limit, risk and fee before confirmation.")}</p>
                           </label>
                         )}
 
                         {method === "phone" && (
                           <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Phone number</span>
-                            <PixelInput
-                              value={phoneNumber}
-                              onChange={(event) => setPhoneNumber(event.target.value)}
-                              placeholder="+1 555 000 0000"
-                              className="mt-2 text-lg font-semibold tabular-nums"
-                            />
-                            <p className="mt-2 text-xs text-muted-foreground">VOXEL will search for a connected bank recipient.</p>
+                            <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("Телефон", "Phone number")}</span>
+                            <PixelInput value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder="+7 900 000 00 00" className="mt-2 text-lg font-black tabular-nums" />
+                            <p className="mt-2 text-xs text-muted-foreground">{t("Найдём подключённый банковский профиль по телефону.", "VOXEL will search for a connected bank recipient.")}</p>
                           </label>
                         )}
                       </div>
                     </div>
 
+                    <TransferInfoStrip />
+
                     <div className="mt-5 flex justify-end">
                       <PixelButton disabled={!canContinue} onClick={() => goNext("amount")} className="bg-primary text-primary-foreground">
-                        Continue
+                        {t("Продолжить", "Continue")}
                         <ArrowRight className="h-4 w-4" />
                       </PixelButton>
                     </div>
@@ -274,33 +274,31 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                 )}
 
                 {step === "amount" && (
-                  <PixelCard eyebrow="Step 2" title="Amount and purpose">
+                  <PixelCard eyebrow={t("Шаг 2", "Step 2")} title={t("Сумма и детали", "Amount and details")} className="payment-hero-card">
                     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
                       <div className="space-y-4">
+                        <div className="border-2 border-foreground bg-secondary p-5 pixel-shadow-sm">
+                          <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("Сумма", "Amount")}</p>
+                          <p className="mt-3 text-5xl font-black tracking-tight text-foreground tabular-nums"><PixelAmount value={amount} /></p>
+                          <p className="mt-2 text-xs text-muted-foreground">{t("Доступно", "Available")}: {formatUsd(sourceAccount.balance)}</p>
+                          <div className="mobile-number-pad mt-5">
+                            {keypad.map((key) => <button key={key} type="button" onClick={() => pressKey(key)}>{key}</button>)}
+                          </div>
+                        </div>
                         <label className="block">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount</span>
-                          <PixelInput
-                            type="number"
-                            min={1}
-                            value={amount}
-                            onChange={(event) => setAmount(Number(event.target.value))}
-                            className="mt-2 h-14 text-2xl font-semibold tabular-nums"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Purpose</span>
+                          <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("Назначение", "Purpose")}</span>
                           <PixelInput value={purpose} onChange={(event) => setPurpose(event.target.value)} className="mt-2" />
                         </label>
                       </div>
 
-                      <PixelCard as="div" title="Preview" className="bg-secondary">
+                      <PixelCard as="div" title={t("Предпросмотр", "Preview")} className="bg-secondary">
                         <DetailsGrid record={draft} compact />
                       </PixelCard>
                     </div>
 
                     <div className="mt-5 flex justify-end">
                       <PixelButton disabled={amount <= 0} onClick={() => goNext("review")} className="bg-primary text-primary-foreground">
-                        Review
+                        {t("Проверить", "Review")}
                         <ArrowRight className="h-4 w-4" />
                       </PixelButton>
                     </div>
@@ -308,15 +306,17 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                 )}
 
                 {step === "review" && (
-                  <PixelCard eyebrow="Step 3" title="Confirm transfer" action={<PixelStatus tone="warning">Needs approval</PixelStatus>}>
+                  <PixelCard eyebrow={t("Шаг 3", "Step 3")} title={t("Подтвердить перевод", "Confirm transfer")} action={<PixelStatus tone="warning">2FA ready</PixelStatus>}>
                     <TransferSummary record={draft} />
+                    <div className="mt-5 grid gap-3 md:grid-cols-3">
+                      <InfoLine icon={ShieldCheck} label="Risk score" value={draft.riskScore} />
+                      <InfoLine icon={Wallet} label="Rail speed" value={draft.speed} />
+                      <InfoLine icon={BadgeCheck} label="Limit" value="Approved" />
+                    </div>
                     <div className="mt-5 flex flex-wrap justify-between gap-3">
-                      <PixelButton onClick={goBack}>
-                        <ArrowLeft className="h-4 w-4" />
-                        Назад
-                      </PixelButton>
+                      <PixelButton onClick={goBack}><ArrowLeft className="h-4 w-4" />{t("Назад", "Back")}</PixelButton>
                       <PixelButton onClick={() => goNext("processing")} className="bg-primary text-primary-foreground">
-                        Confirm transfer
+                        {t("Перевести", "Confirm transfer")}
                         <Send className="h-4 w-4" />
                       </PixelButton>
                     </div>
@@ -324,28 +324,17 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                 )}
 
                 {step === "processing" && (
-                  <PixelCard eyebrow="Processing" title="Transfer is being sent">
+                  <PixelCard eyebrow={t("Обработка", "Processing")} title={t("Деньги отправляются", "Transfer is being sent")}>
                     <div className="flex min-h-80 flex-col items-center justify-center text-center">
-                      <div className="pixel-loader" aria-hidden>
-                        <span />
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                      <p className="mt-6 font-pixel text-[10px] uppercase tracking-wider text-foreground">Authorizing rail</p>
-                      <p className="mt-2 max-w-md text-sm text-muted-foreground">Checking recipient, account limits, fraud rules and ledger reservation.</p>
-                      <div className="mt-6 w-full max-w-md space-y-3">
-                        <PixelSkeleton className="h-10" />
-                        <PixelSkeleton className="h-10" />
-                        <PixelSkeleton className="h-10" />
-                      </div>
+                      <PixelLoader variant="card" label={t("Авторизация", "Authorizing rail")} />
+                      <p className="mt-6 font-pixel text-[10px] uppercase tracking-wider text-foreground">{t("Проверяем маршрут", "Checking route")}</p>
+                      <p className="mt-2 max-w-md text-sm text-muted-foreground">{t("Резервируем сумму, проверяем получателя, лимиты, риск и создаём запись в реестре.", "Checking recipient, limits, risk rules and ledger reservation.")}</p>
+                      <div className="mt-6 w-full max-w-md space-y-3"><PixelSkeleton className="h-10" /><PixelSkeleton className="h-10" /><PixelSkeleton className="h-10" /></div>
                     </div>
                   </PixelCard>
                 )}
 
-                {step === "success" && (
-                  <TransferReceipt record={draft} showReceipt={showReceipt} setShowReceipt={setShowReceipt} />
-                )}
+                {step === "success" && <TransferReceipt record={draft} showReceipt={showReceipt} setShowReceipt={setShowReceipt} completed />}
               </>
             )}
           </div>
@@ -355,181 +344,94 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
   )
 }
 
-function TransferReceipt({
-  record,
-  showReceipt,
-  setShowReceipt,
-}: {
-  record: TransferRecord
-  showReceipt: boolean
-  setShowReceipt: (value: boolean) => void
-}) {
+function TransferReceipt({ record, showReceipt, setShowReceipt, completed }: { record: TransferRecord; showReceipt: boolean; setShowReceipt: (value: boolean) => void; completed?: boolean }) {
+  const { t } = useAppPreferences()
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
-      <PixelCard
-        eyebrow={record.status === "completed" ? "Transfer completed" : "Transfer pending"}
-        title={record.status === "completed" ? "Money is on the way" : "Operation is waiting"}
-        action={<PixelStatus tone={record.status === "completed" ? "success" : "warning"}>{record.status}</PixelStatus>}
-      >
-        <div className="flex min-h-64 flex-col items-center justify-center text-center">
-          <span className="flex h-20 w-20 items-center justify-center border-2 border-foreground bg-primary text-primary-foreground pixel-shadow">
-            <Check className="h-9 w-9" />
+    <div className="relative grid gap-5 lg:grid-cols-[1fr_340px]">
+      {completed && <TransferCelebration />}
+      <PixelCard eyebrow={record.status === "completed" ? t("Перевод выполнен", "Transfer completed") : t("Перевод ожидает", "Transfer pending")} title={record.status === "completed" ? t("Деньги переведены", "Money transferred") : t("Операция ожидает", "Operation is waiting")} action={<PixelStatus tone={record.status === "completed" ? "success" : "warning"}>{record.status}</PixelStatus>} className="receipt-glow-ring pixel-gradient">
+        <div className="flex min-h-72 flex-col items-center justify-center text-center">
+          <span className="flex h-24 w-24 items-center justify-center rounded-[28px] border-2 border-foreground bg-primary text-primary-foreground pixel-shadow">
+            <Check className="h-11 w-11" />
           </span>
-          <p className="mt-6 text-3xl font-semibold tabular-nums text-foreground">{formatUsd(record.amount)}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sent to <span className="font-semibold text-foreground">{record.recipient}</span>
-          </p>
+          <p className="mt-6 text-4xl font-black tabular-nums text-foreground"><PixelAmount value={record.amount} /></p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("Отправлено получателю", "Sent to")} <span className="font-black text-foreground">{record.recipient}</span></p>
+          <div className="mt-4 grid w-full max-w-md grid-cols-3 gap-2 text-xs">
+            <InfoPill label="Rail" value={record.bank} />
+            <InfoPill label="Speed" value={record.speed} />
+            <InfoPill label="Risk" value={record.riskScore} />
+          </div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/" className="pixel-btn inline-flex cursor-pointer items-center justify-center gap-2 bg-primary px-4 py-2.5 font-pixel text-[10px] uppercase text-primary-foreground">
-              <Home className="h-4 w-4" />
-              На главную
-            </Link>
-            <PixelButton onClick={() => setShowReceipt(!showReceipt)}>
-              <Receipt className="h-4 w-4" />
-              Чек
-            </PixelButton>
-            <PixelButton>
-              <Repeat className="h-4 w-4" />
-              Repeat
-            </PixelButton>
+            <Link href="/" className="pixel-btn inline-flex cursor-pointer items-center justify-center gap-2 bg-primary px-4 py-2.5 font-pixel text-[10px] uppercase text-primary-foreground"><Home className="h-4 w-4" />{t("Главная", "Home")}</Link>
+            <PixelButton onClick={() => setShowReceipt(!showReceipt)}><Receipt className="h-4 w-4" />{t("Чек", "Receipt")}</PixelButton>
+            <PixelButton><Repeat className="h-4 w-4" />{t("Повторить", "Repeat")}</PixelButton>
           </div>
         </div>
       </PixelCard>
 
-      <PixelCard title="Operation controls" eyebrow="Actions">
+      <PixelCard title={t("Действия", "Operation controls")} eyebrow="Actions">
         <div className="grid gap-3">
-          <PixelButton className="w-full justify-between">
-            <Download className="h-4 w-4" />
-            Download PDF
-          </PixelButton>
-          <PixelButton className="w-full justify-between">
-            <Share2 className="h-4 w-4" />
-            Share receipt
-          </PixelButton>
-          <PixelButton className="w-full justify-between">
-            <Copy className="h-4 w-4" />
-            Copy operation ID
-          </PixelButton>
+          <PixelButton className="w-full justify-between"><Download className="h-4 w-4" />PDF</PixelButton>
+          <PixelButton className="w-full justify-between"><Share2 className="h-4 w-4" />{t("Поделиться", "Share")}</PixelButton>
+          <PixelButton className="w-full justify-between"><Copy className="h-4 w-4" />ID</PixelButton>
         </div>
       </PixelCard>
 
-      {showReceipt && (
-        <PixelCard className="lg:col-span-2" title="Receipt">
-          <TransferSummary record={record} />
-        </PixelCard>
-      )}
+      {showReceipt && <PixelCard className="lg:col-span-2" title={t("Чек операции", "Receipt")}><TransferSummary record={record} /></PixelCard>}
+    </div>
+  )
+}
+
+function TransferCelebration() {
+  return (
+    <div className="transfer-celebration" aria-hidden>
+      <span className="pixel-firework" style={{ left: "12%", top: "18%" }} />
+      <span className="pixel-firework" style={{ right: "16%", top: "12%", animationDelay: "0.22s" }} />
+      <span className="pixel-coin-burst" style={{ left: "42%", bottom: "16%", animationDelay: "0.1s" }} />
+      <span className="pixel-coin-burst" style={{ left: "58%", bottom: "10%", animationDelay: "0.34s" }} />
+      <span className="pixel-confetti" style={{ left: "24%", top: "0%" }} />
+      <span className="pixel-confetti" style={{ left: "76%", top: "0%", animationDelay: "0.18s" }} />
     </div>
   )
 }
 
 function TransferSummary({ record }: { record: TransferRecord }) {
-  return (
-    <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-      <div className="border-2 border-foreground bg-secondary p-4">
-        <Avatar className="h-16 w-16 rounded-none border-2 border-foreground">
-          <AvatarFallback className="rounded-none bg-primary font-pixel text-[12px] text-primary-foreground">{record.initials}</AvatarFallback>
-        </Avatar>
-        <p className="mt-4 text-base font-semibold text-foreground">{record.recipient}</p>
-        <p className="text-xs text-muted-foreground">{record.recipientHandle}</p>
-      </div>
-      <DetailsGrid record={record} />
-    </div>
-  )
+  return <div className="grid gap-5 lg:grid-cols-[260px_1fr]"><div className="border-2 border-foreground bg-secondary p-4 pixel-shadow-sm"><Avatar className="h-16 w-16 rounded-none border-2 border-foreground"><AvatarFallback className="rounded-none bg-primary font-pixel text-[12px] text-primary-foreground">{record.initials}</AvatarFallback></Avatar><p className="mt-4 text-base font-black text-foreground">{record.recipient}</p><p className="text-xs text-muted-foreground">{record.recipientHandle}</p></div><DetailsGrid record={record} /></div>
 }
 
 function DetailsGrid({ record, compact }: { record: TransferRecord; compact?: boolean }) {
-  const rows = [
-    ["Operation ID", record.operationCode],
-    ["Created", record.createdAt],
-    ["Source", record.source],
-    ["Method", record.method],
-    ["Bank rail", record.bank],
-    ["Purpose", record.purpose],
-    ["Fee", formatUsd(record.fee)],
-    ["Total", formatUsd(record.amount + record.fee)],
-  ]
-
-  return (
-    <div className={cn("grid gap-3", compact ? "text-sm" : "md:grid-cols-2")}>
-      {rows.map(([label, value]) => (
-        <div key={label} className="border-2 border-foreground bg-card p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-          <p className="mt-1 break-words text-sm font-semibold text-foreground">{value}</p>
-        </div>
-      ))}
-    </div>
-  )
+  const rows = [["Operation ID", record.operationCode], ["Created", record.createdAt], ["Source", record.source], ["Method", record.method], ["Bank rail", record.bank], ["Purpose", record.purpose], ["Fee", formatUsd(record.fee)], ["Total", formatUsd(record.amount + record.fee)], ["Speed", record.speed], ["Risk", record.riskScore]]
+  return <div className={cn("grid gap-3", compact ? "text-sm" : "md:grid-cols-2")}>{rows.map(([label, value]) => <div key={label} className="border-2 border-foreground bg-card p-3"><p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 break-words text-sm font-black text-foreground">{value}</p></div>)}</div>
 }
 
-function MethodButton({
-  active,
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  active: boolean
-  icon: typeof UserRound
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex cursor-pointer items-center gap-3 border-2 px-3 py-3 text-left text-sm font-semibold transition-all",
-        active ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm" : "border-foreground bg-card text-foreground hover:bg-secondary",
-      )}
-    >
-      <Icon className="h-4 w-4" />
-      {label}
-    </button>
-  )
+function MethodButton({ active, icon: Icon, label, onClick }: { active: boolean; icon: typeof UserRound; label: string; onClick: () => void }) {
+  return <button onClick={onClick} className={cn("flex cursor-pointer items-center gap-3 border-2 px-3 py-3 text-left text-sm font-black transition-all", active ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm" : "border-foreground bg-card text-foreground hover:bg-secondary")}><Icon className="h-4 w-4" />{label}</button>
 }
 
 function ProgressBar({ step }: { step: TransferStep }) {
+  const { t } = useAppPreferences()
   const activeIndex = Math.max(0, stepOrder.indexOf(step))
-
-  return (
-    <div className="mb-5 grid grid-cols-4 gap-2">
-      {["Recipient", "Amount", "Review", "Done"].map((label, index) => (
-        <div key={label} className={cn("border-2 border-foreground p-2 text-center", index <= activeIndex ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground")}>
-          <p className="font-pixel text-[8px] uppercase">{label}</p>
-        </div>
-      ))}
-    </div>
-  )
+  return <div className="mb-5 grid grid-cols-4 gap-2">{[t("Получатель", "Recipient"), t("Сумма", "Amount"), t("Проверка", "Review"), t("Готово", "Done")].map((label, index) => <div key={label} className={cn("border-2 border-foreground p-2 text-center", index <= activeIndex ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground")}><p className="font-pixel text-[8px] uppercase">{label}</p></div>)}</div>
 }
 
 function TransferSkeleton() {
-  return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-      <PixelCard>
-        <div className="space-y-4">
-          <PixelSkeleton className="h-8 w-1/3" />
-          <PixelSkeleton className="h-40" />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <PixelSkeleton className="h-20" />
-            <PixelSkeleton className="h-20" />
-            <PixelSkeleton className="h-20" />
-          </div>
-        </div>
-      </PixelCard>
-      <PixelCard>
-        <div className="space-y-3">
-          <PixelSkeleton className="h-8" />
-          <PixelSkeleton className="h-16" />
-          <PixelSkeleton className="h-8 w-2/3" />
-        </div>
-      </PixelCard>
-    </div>
-  )
+  return <div className="grid gap-5 lg:grid-cols-[1fr_320px]"><PixelCard><div className="space-y-4"><PixelSkeleton className="h-8 w-1/3" /><PixelSkeleton className="h-44" /><div className="grid gap-3 sm:grid-cols-3"><PixelSkeleton className="h-20" /><PixelSkeleton className="h-20" /><PixelSkeleton className="h-20" /></div></div></PixelCard><PixelCard><div className="space-y-3"><PixelLoader variant="card" label="Loading" /><PixelSkeleton className="h-8" /><PixelSkeleton className="h-16" /></div></PixelCard></div>
+}
+
+function TransferInfoStrip() {
+  return <div className="payment-stat-strip mt-5"><InfoPill label="2FA" value="Passkey" /><InfoPill label="Limit" value="$10k" /><InfoPill label="Fee" value="$0–0.35" /><InfoPill label="Speed" value="Instant" /></div>
+}
+
+function InfoPill({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-full border-2 border-foreground bg-card px-3 py-2 text-center pixel-shadow-sm"><p className="font-pixel text-[8px] uppercase text-muted-foreground">{label}</p><p className="mt-1 truncate text-xs font-black text-foreground">{value}</p></div>
+}
+
+function InfoLine({ icon: Icon, label, value }: { icon: typeof ShieldCheck; label: string; value: string }) {
+  return <div className="flex items-center justify-between gap-3 border-2 border-foreground bg-secondary p-3"><span className="flex items-center gap-2 text-sm font-black text-foreground"><Icon className="h-4 w-4 text-primary" />{label}</span><span className="text-sm font-black text-foreground">{value}</span></div>
 }
 
 function formatCard(value: string) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, 16)
-    .replace(/(\d{4})(?=\d)/g, "$1 ")
+  return value.replace(/\D/g, "").slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ")
 }
 
 function maskCard(value: string) {
