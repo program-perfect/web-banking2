@@ -25,12 +25,12 @@ export type BankingNavItem = {
 }
 
 export const bankingNavItems: BankingNavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "cards", label: "Cards", icon: CreditCard },
-  { id: "payments", label: "Payments", icon: ArrowLeftRight },
+  { id: "dashboard", label: "Главная", icon: LayoutDashboard },
+  { id: "cards", label: "Карты", icon: CreditCard },
+  { id: "payments", label: "Платежи", icon: ArrowLeftRight },
   { id: "wallet", label: "BLOK Wallet", icon: Wallet },
-  { id: "savings", label: "Savings", icon: PiggyBank },
-  { id: "bills", label: "Bills", icon: Receipt },
+  { id: "savings", label: "Накопления", icon: PiggyBank },
+  { id: "bills", label: "Счета", icon: Receipt },
 ]
 
 type SidebarProps = {
@@ -57,7 +57,7 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
       </div>
 
       <nav className="mt-7 flex flex-col gap-1.5" aria-label="Main banking navigation">
-        <p className="px-1 pb-2 font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Menu</p>
+        <p className="px-1 pb-2 font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Меню</p>
         {bankingNavItems.map((item) => {
           const Icon = item.icon
           const isActive = selected === item.id
@@ -66,7 +66,7 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
               key={item.id}
               onClick={() => navigate(item.id)}
               className={cn(
-                "flex cursor-pointer items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all duration-150",
+                "flex cursor-pointer items-center gap-3 rounded-full border-2 px-3 py-2.5 text-sm font-black transition-all duration-150",
                 isActive
                   ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm"
                   : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground",
@@ -83,16 +83,16 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
       <div className="mt-auto flex flex-col gap-1.5">
         <Link
           href="/preferences"
-          className="flex cursor-pointer items-center gap-3 border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground"
+          className="flex cursor-pointer items-center gap-3 rounded-full border-2 border-transparent px-3 py-2.5 text-sm font-black text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground"
         >
           <SlidersHorizontal className="h-[18px] w-[18px]" />
-          Settings
+          Настройки
         </Link>
 
         <button
           onClick={() => navigate("support")}
           className={cn(
-            "flex cursor-pointer items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all",
+            "flex cursor-pointer items-center gap-3 rounded-full border-2 px-3 py-2.5 text-sm font-black transition-all",
             selected === "support"
               ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm"
               : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground",
@@ -100,19 +100,19 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
           aria-current={selected === "support" ? "page" : undefined}
         >
           <LifeBuoy className="h-[18px] w-[18px]" />
-          Support
+          Поддержка
         </button>
 
-        <div className="mt-3 border-2 border-foreground bg-accent p-4 pixel-shadow">
+        <div className="mt-3 rounded-[24px] border-2 border-foreground bg-accent p-4 pixel-shadow">
           <p className="font-pixel text-[10px] uppercase leading-relaxed text-accent-foreground">Control center</p>
           <p className="mt-2 text-xs leading-relaxed text-accent-foreground/80">
-            Theme, animation and cursor options now live in Settings.
+            Тема, локализация, анимации, glow и курсор теперь живут в настройках.
           </p>
           <Link
             href="/preferences"
             className="pixel-btn mt-3 inline-flex w-full cursor-pointer justify-center bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground"
           >
-            Open settings
+            Открыть
           </Link>
         </div>
       </div>
