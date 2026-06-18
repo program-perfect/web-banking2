@@ -2,8 +2,179 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useAppPreferences } from "@/components/banking/app-preferences"
+import { cn } from "@/lib/utils"
 
 type CursorMode = "default" | "pointer" | "press" | "text" | "grab" | "grabbing" | "wait" | "disabled"
+
+type CursorSprite = {
+  hotspot: { x: number; y: number }
+  pixels: string[]
+}
+
+const cursorModeList: CursorMode[] = ["default", "pointer", "press", "text", "grab", "grabbing", "wait", "disabled"]
+
+const cursorSprites: Record<CursorMode, CursorSprite> = {
+  default: {
+    hotspot: { x: 1, y: 1 },
+    pixels: [
+      "1............",
+      "11...........",
+      "121..........",
+      "1221.........",
+      "12221........",
+      "122221.......",
+      "1222221......",
+      "12222221.....",
+      "122211111....",
+      "12121........",
+      "11.121.......",
+      "1..121.......",
+      "...121.......",
+      "...111.......",
+      ".............",
+    ],
+  },
+  pointer: {
+    hotspot: { x: 26, y: 6 },
+    pixels: [
+      "....11.......",
+      "...1221......",
+      "...1221......",
+      "...1221......",
+      ".11122111....",
+      "1222222221...",
+      "12222222221..",
+      "12222222221..",
+      "1222222221...",
+      "122222221....",
+      ".1222221.....",
+      "..12221......",
+      "...111.......",
+      ".............",
+      ".............",
+    ],
+  },
+  press: {
+    hotspot: { x: 26, y: 10 },
+    pixels: [
+      ".............",
+      "....11.......",
+      "...1221......",
+      "...1221......",
+      ".11122111....",
+      "1222222221...",
+      "12223322221..",
+      "12223322221..",
+      "1222222221...",
+      "122222221....",
+      ".1222221.....",
+      "..12221......",
+      "...111.......",
+      ".............",
+      ".............",
+    ],
+  },
+  text: {
+    hotspot: { x: 32, y: 32 },
+    pixels: [
+      "...1111111...",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      ".....121.....",
+      "...1111111...",
+      ".............",
+      ".............",
+    ],
+  },
+  grab: {
+    hotspot: { x: 30, y: 28 },
+    pixels: [
+      "..11..11.....",
+      ".12211221....",
+      ".12211221....",
+      ".12222221....",
+      "1122222211...",
+      "1222222221...",
+      "1222222221...",
+      "122222221....",
+      ".1222221.....",
+      "..11111......",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+    ],
+  },
+  grabbing: {
+    hotspot: { x: 30, y: 28 },
+    pixels: [
+      ".............",
+      "..11..11.....",
+      ".12211221....",
+      "1122222211...",
+      "1222332221...",
+      "1223333221...",
+      "1222332221...",
+      ".12222221....",
+      "..122221.....",
+      "...1111......",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+    ],
+  },
+  wait: {
+    hotspot: { x: 32, y: 32 },
+    pixels: [
+      "..1111111....",
+      "..1222221....",
+      "...12221.....",
+      "....121......",
+      "....131......",
+      "....131......",
+      "....121......",
+      "...12221.....",
+      "..1222221....",
+      "..1111111....",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+    ],
+  },
+  disabled: {
+    hotspot: { x: 24, y: 24 },
+    pixels: [
+      "...11111.....",
+      "..1222221....",
+      ".122111221...",
+      ".121...121...",
+      ".121..1121...",
+      ".121.11221...",
+      ".121112221...",
+      ".122222221...",
+      "..1222221....",
+      "...11111.....",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+    ],
+  },
+}
 
 const interactiveSelector = [
   "a",
@@ -37,7 +208,15 @@ const waitSelector = ["[aria-busy='true']", "[data-loading='true']", "[data-curs
 const disabledSelector = [":disabled", "[aria-disabled='true']", "[data-disabled='true']", "[data-cursor='disabled']"].join(",")
 
 function isCursorMode(value: string | null): value is CursorMode {
-  return ["default", "pointer", "press", "text", "grab", "grabbing", "wait", "disabled"].includes(value ?? "")
+  return cursorModeList.includes(value as CursorMode)
+}
+
+function normalizeRows(rows: string[]) {
+  const columns = Math.max(...rows.map((row) => row.length))
+  return {
+    columns,
+    rows: rows.map((row) => row.padEnd(columns, ".")),
+  }
 }
 
 export function PixelCursor() {
@@ -45,10 +224,13 @@ export function PixelCursor() {
   const cursorRef = useRef<HTMLDivElement>(null)
   const modeRef = useRef<CursorMode>("default")
   const pressedRef = useRef(false)
-  const targetRef = useRef({ x: -160, y: -160 })
-  const currentRef = useRef({ x: -160, y: -160 })
+  const targetRef = useRef({ x: -140, y: -140 })
+  const currentRef = useRef({ x: -140, y: -140 })
   const frameRef = useRef<number | null>(null)
-  const [mode, setModeState] = useState<CursorMode>("default")
+  const [cursorMode, setCursorMode] = useState<CursorMode>("default")
+
+  const sprite = cursorSprites[cursorMode]
+  const normalized = normalizeRows(sprite.pixels)
 
   useEffect(() => {
     const canUseCustomCursor = window.matchMedia("(pointer: fine)").matches && cursorStyle !== "native"
@@ -66,7 +248,7 @@ export function PixelCursor() {
     function setMode(nextMode: CursorMode) {
       if (modeRef.current === nextMode) return
       modeRef.current = nextMode
-      setModeState(nextMode)
+      setCursorMode(nextMode)
     }
 
     function resolveMode(target: EventTarget | null): CursorMode {
@@ -79,15 +261,17 @@ export function PixelCursor() {
       if (element?.closest(textSelector)) return "text"
       if (element?.closest(grabSelector)) return pressedRef.current ? "grabbing" : "grab"
       if (element?.closest(interactiveSelector)) return pressedRef.current ? "press" : "pointer"
+
       return "default"
     }
 
     function tick() {
       const cursor = cursorRef.current
       if (!cursor) return
+
       const current = currentRef.current
       const target = targetRef.current
-      const lerp = cursorStyle === "minimal" ? 0.38 : 0.22
+      const lerp = cursorStyle === "minimal" ? 0.36 : 0.22
 
       current.x += (target.x - current.x) * lerp
       current.y += (target.y - current.y) * lerp
@@ -95,13 +279,17 @@ export function PixelCursor() {
       if (Math.abs(target.x - current.x) < 0.08) current.x = target.x
       if (Math.abs(target.y - current.y) < 0.08) current.y = target.y
 
-      const offset = modeRef.current === "text" ? 18 : 2
-      cursor.style.transform = `translate3d(${current.x - offset}px, ${current.y - offset}px, 0)`
+      const { hotspot } = cursorSprites[modeRef.current]
+      cursor.style.transform = `translate3d(${current.x - hotspot.x}px, ${current.y - hotspot.y}px, 0)`
+
       frameRef.current = window.requestAnimationFrame(tick)
     }
 
     function handlePointerMove(event: PointerEvent) {
-      cursorRef.current?.classList.remove("neo-pixel-cursor--hidden")
+      const cursor = cursorRef.current
+      if (!cursor) return
+
+      cursor.classList.remove("pixel-cursor--hidden")
       targetRef.current = { x: event.clientX, y: event.clientY }
       setMode(resolveMode(event.target))
     }
@@ -117,7 +305,7 @@ export function PixelCursor() {
     }
 
     function handlePointerLeave() {
-      cursorRef.current?.classList.add("neo-pixel-cursor--hidden")
+      cursorRef.current?.classList.add("pixel-cursor--hidden")
     }
 
     frameRef.current = window.requestAnimationFrame(tick)
@@ -139,10 +327,29 @@ export function PixelCursor() {
   if (cursorStyle === "native") return null
 
   return (
-    <div ref={cursorRef} className="neo-pixel-cursor neo-pixel-cursor--hidden" data-mode={mode} aria-hidden="true">
-      <span className="neo-pixel-cursor__glow" />
-      <span className="neo-pixel-cursor__arrow" />
-      <span className="neo-pixel-cursor__badge" />
+    <div ref={cursorRef} className="pixel-cursor pixel-cursor--hidden" data-mode={cursorMode} aria-hidden="true">
+      <span className="pixel-cursor__halo" />
+      <div
+        className="pixel-cursor__sprite"
+        style={{
+          gridTemplateColumns: `repeat(${normalized.columns}, var(--pixel-cursor-size))`,
+        }}
+      >
+        {normalized.rows.flatMap((row, y) =>
+          row.split("").map((cell, x) => (
+            <span
+              key={`${cursorMode}-${x}-${y}`}
+              className={cn(
+                "pixel-cursor__cell",
+                cell === "." && "pixel-cursor__cell--empty",
+                cell === "1" && "pixel-cursor__cell--ink",
+                cell === "2" && "pixel-cursor__cell--paper",
+                cell === "3" && "pixel-cursor__cell--accent",
+              )}
+            />
+          )),
+        )}
+      </div>
     </div>
   )
 }
