@@ -1,7 +1,7 @@
 export type Account = {
   id: string
   name: string
-  type: "Checking" | "Savings" | "Crypto"
+  type: "Текущий" | "Накопительный" | "Крипто"
   number: string
   balance: number
   currency: string
@@ -47,9 +47,9 @@ export type Contact = {
 }
 
 export const accounts: Account[] = [
-  { id: "main", name: "Основной счёт", type: "Checking", number: "**** 4921", balance: 18420.55, currency: "USD", delta: 4.2 },
-  { id: "save", name: "Накопительный сейф", type: "Savings", number: "**** 7730", balance: 52800.0, currency: "USD", delta: 1.8 },
-  { id: "voxel", name: "VOXEL-кошелёк", type: "Crypto", number: "VX...8f2c", balance: 9314.27, currency: "USD", delta: 12.6 },
+  { id: "main", name: "Основной счёт", type: "Текущий", number: "**** 4921", balance: 18420.55, currency: "USD", delta: 4.2 },
+  { id: "save", name: "Накопительный сейф", type: "Накопительный", number: "**** 7730", balance: 52800.0, currency: "USD", delta: 1.8 },
+  { id: "voxel", name: "VOXEL-кошелёк", type: "Крипто", number: "VX...8f2c", balance: 9314.27, currency: "USD", delta: 12.6 },
 ]
 
 export const totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
