@@ -18,7 +18,7 @@ export default function PreferencesPage() {
               <BrandMark className="h-5 w-5" />
             </span>
             <div>
-              <p className="font-pixel text-[10px] uppercase tracking-wider text-muted-foreground">VOXEL control center</p>
+              <p className="font-pixel text-[10px] uppercase tracking-wider text-muted-foreground">Центр управления VOXEL</p>
               <h1 className="text-lg font-black text-foreground">Настройки</h1>
             </div>
           </div>
@@ -33,9 +33,9 @@ export default function PreferencesPage() {
       <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6">
         <div className="mb-6 animate-view-enter">
           <p className="font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Все параметры</p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-foreground">Профиль, тема, анимации и курсор</h2>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-foreground">Профиль, тема, анимации, курсор, контакты и переводы</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Отдельный neo-brutal центр управления: имя, локализация, cursor modes, glow, пиксельные градиенты и motion.
+            Отдельный neo-brutal центр управления: имя, локализация, режимы курсора, glow, пиксельные градиенты, производительность, контакты и детали перевода.
           </p>
         </div>
 
