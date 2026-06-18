@@ -29,7 +29,7 @@ const defaultPreferences: AppPreferences = {
   profileName: "Алекс",
   locale: "ru",
   themeMode: "light",
-  motionLevel: "full",
+  motionLevel: "reduced",
   cursorStyle: "pixel",
   cursorGlow: true,
   glowEnabled: true,
@@ -37,7 +37,7 @@ const defaultPreferences: AppPreferences = {
   soundEffects: false,
 }
 
-const storageKey = "voxel-preferences-v2"
+const storageKey = "voxel-preferences-v3"
 const PreferencesContext = createContext<PreferencesContextValue | null>(null)
 
 export function AppPreferencesProvider({ children }: { children: ReactNode }) {

@@ -9,6 +9,8 @@ import './globals.mobile-effects.css'
 import './globals.cursor-and-celebration.css'
 import './globals.pr6-panel-fixes.css'
 import './globals.transfer-celebration-fix.css'
+import './globals.hover-pattern-motion.css'
+import './globals.performance-budget.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({

@@ -1,0 +1,345 @@
+/* Hover/focus-only pixel background textures for neo-brutalist panels and controls.
+   Motion is opt-in through html[data-motion="full"] or html[data-motion="balanced"]. */
+@layer components {
+  .pixel-card,
+  .pixel-surface,
+  .pixel-btn,
+  .pixel-gradient,
+  .payment-hero-card,
+  .receipt-glow-ring,
+  .neo-topbar,
+  .neo-mobile-action,
+  [data-panel],
+  [data-hover-panel],
+  [role="button"],
+  [role="tab"],
+  [role="option"] {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .pixel-card::before,
+  .pixel-surface::before,
+  .pixel-btn::before,
+  .pixel-gradient::before,
+  .payment-hero-card::before,
+  .receipt-glow-ring::before,
+  .neo-topbar::after,
+  .neo-mobile-action::before,
+  [data-panel]::before,
+  [data-hover-panel]::before,
+  [role="button"]::before,
+  [role="tab"]::before,
+  [role="option"]::before {
+    content: "";
+    position: absolute;
+    inset: -18%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0 !important;
+    background-image:
+      linear-gradient(135deg, color-mix(in oklch, var(--foreground) 10%, transparent) 0 12px, transparent 12px 24px),
+      linear-gradient(45deg, color-mix(in oklch, var(--primary) 12%, transparent) 0 10px, transparent 10px 22px),
+      radial-gradient(circle at 18% 22%, color-mix(in oklch, var(--primary) 20%, transparent) 0 8px, transparent 9px),
+      radial-gradient(circle at 78% 68%, color-mix(in oklch, var(--accent) 16%, transparent) 0 10px, transparent 11px);
+    background-size: 34px 34px, 28px 28px, 120px 120px, 140px 140px;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    filter: saturate(0.72) contrast(0.86);
+    transform: translate3d(0, 0, 0) rotate(0.001deg);
+    will-change: auto;
+  }
+
+  .pixel-card:hover::before,
+  .pixel-card:focus-within::before,
+  .pixel-surface:hover::before,
+  .pixel-surface:focus-within::before,
+  .pixel-btn:hover::before,
+  .pixel-btn:focus-visible::before,
+  .pixel-gradient:hover::before,
+  .pixel-gradient:focus-within::before,
+  .payment-hero-card:hover::before,
+  .payment-hero-card:focus-within::before,
+  .receipt-glow-ring:hover::before,
+  .receipt-glow-ring:focus-within::before,
+  .neo-topbar:hover::after,
+  .neo-topbar:focus-within::after,
+  .neo-mobile-action:hover::before,
+  .neo-mobile-action:focus-visible::before,
+  [data-panel]:hover::before,
+  [data-panel]:focus-within::before,
+  [data-hover-panel]:hover::before,
+  [data-hover-panel]:focus-within::before,
+  [role="button"]:hover::before,
+  [role="button"]:focus-visible::before,
+  [role="tab"]:hover::before,
+  [role="tab"]:focus-visible::before,
+  [role="option"]:hover::before,
+  [role="option"]:focus-visible::before {
+    opacity: 0.065 !important;
+  }
+
+  html[data-motion="full"] .pixel-card:hover::before,
+  html[data-motion="full"] .pixel-card:focus-within::before,
+  html[data-motion="full"] .pixel-surface:hover::before,
+  html[data-motion="full"] .pixel-surface:focus-within::before,
+  html[data-motion="full"] .pixel-btn:hover::before,
+  html[data-motion="full"] .pixel-btn:focus-visible::before,
+  html[data-motion="full"] .pixel-gradient:hover::before,
+  html[data-motion="full"] .pixel-gradient:focus-within::before,
+  html[data-motion="full"] .payment-hero-card:hover::before,
+  html[data-motion="full"] .payment-hero-card:focus-within::before,
+  html[data-motion="full"] .receipt-glow-ring:hover::before,
+  html[data-motion="full"] .receipt-glow-ring:focus-within::before,
+  html[data-motion="full"] .neo-topbar:hover::after,
+  html[data-motion="full"] .neo-topbar:focus-within::after,
+  html[data-motion="full"] .neo-mobile-action:hover::before,
+  html[data-motion="full"] .neo-mobile-action:focus-visible::before,
+  html[data-motion="full"] [data-panel]:hover::before,
+  html[data-motion="full"] [data-panel]:focus-within::before,
+  html[data-motion="full"] [data-hover-panel]:hover::before,
+  html[data-motion="full"] [data-hover-panel]:focus-within::before,
+  html[data-motion="full"] [role="button"]:hover::before,
+  html[data-motion="full"] [role="button"]:focus-visible::before,
+  html[data-motion="full"] [role="tab"]:hover::before,
+  html[data-motion="full"] [role="tab"]:focus-visible::before,
+  html[data-motion="full"] [role="option"]:hover::before,
+  html[data-motion="full"] [role="option"]:focus-visible::before {
+    will-change: background-position, transform, opacity;
+    animation:
+      pixel-panel-pattern-drift 1.55s steps(12, end) infinite,
+      pixel-panel-pattern-breathe 3.2s steps(8, end) infinite;
+  }
+
+  html[data-motion="balanced"] .pixel-card:hover::before,
+  html[data-motion="balanced"] .pixel-card:focus-within::before,
+  html[data-motion="balanced"] .pixel-surface:hover::before,
+  html[data-motion="balanced"] .pixel-surface:focus-within::before,
+  html[data-motion="balanced"] .pixel-btn:hover::before,
+  html[data-motion="balanced"] .pixel-btn:focus-visible::before,
+  html[data-motion="balanced"] .pixel-gradient:hover::before,
+  html[data-motion="balanced"] .pixel-gradient:focus-within::before,
+  html[data-motion="balanced"] .payment-hero-card:hover::before,
+  html[data-motion="balanced"] .payment-hero-card:focus-within::before,
+  html[data-motion="balanced"] .receipt-glow-ring:hover::before,
+  html[data-motion="balanced"] .receipt-glow-ring:focus-within::before,
+  html[data-motion="balanced"] .neo-topbar:hover::after,
+  html[data-motion="balanced"] .neo-topbar:focus-within::after,
+  html[data-motion="balanced"] .neo-mobile-action:hover::before,
+  html[data-motion="balanced"] .neo-mobile-action:focus-visible::before,
+  html[data-motion="balanced"] [data-panel]:hover::before,
+  html[data-motion="balanced"] [data-panel]:focus-within::before,
+  html[data-motion="balanced"] [data-hover-panel]:hover::before,
+  html[data-motion="balanced"] [data-hover-panel]:focus-within::before,
+  html[data-motion="balanced"] [role="button"]:hover::before,
+  html[data-motion="balanced"] [role="button"]:focus-visible::before,
+  html[data-motion="balanced"] [role="tab"]:hover::before,
+  html[data-motion="balanced"] [role="tab"]:focus-visible::before,
+  html[data-motion="balanced"] [role="option"]:hover::before,
+  html[data-motion="balanced"] [role="option"]:focus-visible::before {
+    will-change: background-position, transform, opacity;
+    animation:
+      pixel-panel-pattern-drift 2.6s steps(8, end) infinite,
+      pixel-panel-pattern-breathe 5.4s steps(6, end) infinite;
+  }
+
+  .dark .pixel-card:hover::before,
+  .dark .pixel-card:focus-within::before,
+  .dark .pixel-surface:hover::before,
+  .dark .pixel-surface:focus-within::before,
+  .dark .pixel-btn:hover::before,
+  .dark .pixel-btn:focus-visible::before,
+  .dark .pixel-gradient:hover::before,
+  .dark .pixel-gradient:focus-within::before,
+  .dark .payment-hero-card:hover::before,
+  .dark .payment-hero-card:focus-within::before,
+  .dark .receipt-glow-ring:hover::before,
+  .dark .receipt-glow-ring:focus-within::before,
+  .dark .neo-topbar:hover::after,
+  .dark .neo-topbar:focus-within::after,
+  .dark .neo-mobile-action:hover::before,
+  .dark .neo-mobile-action:focus-visible::before,
+  .dark [data-panel]:hover::before,
+  .dark [data-panel]:focus-within::before,
+  .dark [data-hover-panel]:hover::before,
+  .dark [data-hover-panel]:focus-within::before,
+  .dark [role="button"]:hover::before,
+  .dark [role="button"]:focus-visible::before,
+  .dark [role="tab"]:hover::before,
+  .dark [role="tab"]:focus-visible::before,
+  .dark [role="option"]:hover::before,
+  .dark [role="option"]:focus-visible::before {
+    opacity: 0.038 !important;
+    filter: saturate(0.44) contrast(0.74) brightness(0.92);
+  }
+
+  html[data-pixel-gradients="false"] .pixel-card:hover::before,
+  html[data-pixel-gradients="false"] .pixel-card:focus-within::before,
+  html[data-pixel-gradients="false"] .pixel-surface:hover::before,
+  html[data-pixel-gradients="false"] .pixel-surface:focus-within::before,
+  html[data-pixel-gradients="false"] .pixel-btn:hover::before,
+  html[data-pixel-gradients="false"] .pixel-btn:focus-visible::before,
+  html[data-pixel-gradients="false"] .pixel-gradient:hover::before,
+  html[data-pixel-gradients="false"] .pixel-gradient:focus-within::before,
+  html[data-pixel-gradients="false"] .payment-hero-card:hover::before,
+  html[data-pixel-gradients="false"] .payment-hero-card:focus-within::before,
+  html[data-pixel-gradients="false"] .receipt-glow-ring:hover::before,
+  html[data-pixel-gradients="false"] .receipt-glow-ring:focus-within::before,
+  html[data-pixel-gradients="false"] [data-panel]:hover::before,
+  html[data-pixel-gradients="false"] [data-panel]:focus-within::before,
+  html[data-pixel-gradients="false"] [data-hover-panel]:hover::before,
+  html[data-pixel-gradients="false"] [data-hover-panel]:focus-within::before {
+    opacity: 0.02 !important;
+  }
+
+  html[data-motion="reduced"] .pixel-card:hover::before,
+  html[data-motion="reduced"] .pixel-card:focus-within::before,
+  html[data-motion="reduced"] .pixel-surface:hover::before,
+  html[data-motion="reduced"] .pixel-surface:focus-within::before,
+  html[data-motion="reduced"] .pixel-btn:hover::before,
+  html[data-motion="reduced"] .pixel-btn:focus-visible::before,
+  html[data-motion="reduced"] .pixel-gradient:hover::before,
+  html[data-motion="reduced"] .pixel-gradient:focus-within::before,
+  html[data-motion="reduced"] .payment-hero-card:hover::before,
+  html[data-motion="reduced"] .payment-hero-card:focus-within::before,
+  html[data-motion="reduced"] .receipt-glow-ring:hover::before,
+  html[data-motion="reduced"] .receipt-glow-ring:focus-within::before,
+  html[data-motion="reduced"] .neo-topbar:hover::after,
+  html[data-motion="reduced"] .neo-topbar:focus-within::after,
+  html[data-motion="reduced"] .neo-mobile-action:hover::before,
+  html[data-motion="reduced"] .neo-mobile-action:focus-visible::before,
+  html[data-motion="reduced"] [data-panel]:hover::before,
+  html[data-motion="reduced"] [data-panel]:focus-within::before,
+  html[data-motion="reduced"] [data-hover-panel]:hover::before,
+  html[data-motion="reduced"] [data-hover-panel]:focus-within::before,
+  html[data-motion="reduced"] [role="button"]:hover::before,
+  html[data-motion="reduced"] [role="button"]:focus-visible::before,
+  html[data-motion="reduced"] [role="tab"]:hover::before,
+  html[data-motion="reduced"] [role="tab"]:focus-visible::before,
+  html[data-motion="reduced"] [role="option"]:hover::before,
+  html[data-motion="reduced"] [role="option"]:focus-visible::before {
+    animation: none !important;
+    background-position: 0 0, 0 0, 0 0, 0 0 !important;
+    transform: none !important;
+  }
+
+  @media (hover: none), (pointer: coarse), (max-width: 1023px) {
+    .pixel-card:hover::before,
+    .pixel-card:focus-within::before,
+    .pixel-surface:hover::before,
+    .pixel-surface:focus-within::before,
+    .pixel-btn:hover::before,
+    .pixel-btn:focus-visible::before,
+    .pixel-gradient:hover::before,
+    .pixel-gradient:focus-within::before,
+    .payment-hero-card:hover::before,
+    .payment-hero-card:focus-within::before,
+    .receipt-glow-ring:hover::before,
+    .receipt-glow-ring:focus-within::before,
+    .neo-topbar:hover::after,
+    .neo-topbar:focus-within::after,
+    .neo-mobile-action:hover::before,
+    .neo-mobile-action:focus-visible::before,
+    [data-panel]:hover::before,
+    [data-panel]:focus-within::before,
+    [data-hover-panel]:hover::before,
+    [data-hover-panel]:focus-within::before,
+    [role="button"]:hover::before,
+    [role="button"]:focus-visible::before,
+    [role="tab"]:hover::before,
+    [role="tab"]:focus-visible::before,
+    [role="option"]:hover::before,
+    [role="option"]:focus-visible::before {
+      opacity: 0.032 !important;
+    }
+
+    html[data-motion="full"] .pixel-card:hover::before,
+    html[data-motion="full"] .pixel-card:focus-within::before,
+    html[data-motion="full"] .pixel-surface:hover::before,
+    html[data-motion="full"] .pixel-surface:focus-within::before,
+    html[data-motion="full"] .pixel-btn:hover::before,
+    html[data-motion="full"] .pixel-btn:focus-visible::before,
+    html[data-motion="full"] .pixel-gradient:hover::before,
+    html[data-motion="full"] .pixel-gradient:focus-within::before,
+    html[data-motion="full"] .payment-hero-card:hover::before,
+    html[data-motion="full"] .payment-hero-card:focus-within::before,
+    html[data-motion="full"] .receipt-glow-ring:hover::before,
+    html[data-motion="full"] .receipt-glow-ring:focus-within::before,
+    html[data-motion="full"] .neo-topbar:hover::after,
+    html[data-motion="full"] .neo-topbar:focus-within::after,
+    html[data-motion="full"] .neo-mobile-action:hover::before,
+    html[data-motion="full"] .neo-mobile-action:focus-visible::before,
+    html[data-motion="full"] [data-panel]:hover::before,
+    html[data-motion="full"] [data-panel]:focus-within::before,
+    html[data-motion="full"] [data-hover-panel]:hover::before,
+    html[data-motion="full"] [data-hover-panel]:focus-within::before,
+    html[data-motion="full"] [role="button"]:hover::before,
+    html[data-motion="full"] [role="button"]:focus-visible::before,
+    html[data-motion="full"] [role="tab"]:hover::before,
+    html[data-motion="full"] [role="tab"]:focus-visible::before,
+    html[data-motion="full"] [role="option"]:hover::before,
+    html[data-motion="full"] [role="option"]:focus-visible::before {
+      animation-duration: 2.4s, 4.8s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce), (update: slow) {
+    .pixel-card:hover::before,
+    .pixel-card:focus-within::before,
+    .pixel-surface:hover::before,
+    .pixel-surface:focus-within::before,
+    .pixel-btn:hover::before,
+    .pixel-btn:focus-visible::before,
+    .pixel-gradient:hover::before,
+    .pixel-gradient:focus-within::before,
+    .payment-hero-card:hover::before,
+    .payment-hero-card:focus-within::before,
+    .receipt-glow-ring:hover::before,
+    .receipt-glow-ring:focus-within::before,
+    .neo-topbar:hover::after,
+    .neo-topbar:focus-within::after,
+    .neo-mobile-action:hover::before,
+    .neo-mobile-action:focus-visible::before,
+    [data-panel]:hover::before,
+    [data-panel]:focus-within::before,
+    [data-hover-panel]:hover::before,
+    [data-hover-panel]:focus-within::before,
+    [role="button"]:hover::before,
+    [role="button"]:focus-visible::before,
+    [role="tab"]:hover::before,
+    [role="tab"]:focus-visible::before,
+    [role="option"]:hover::before,
+    [role="option"]:focus-visible::before {
+      animation: none !important;
+      background-position: 0 0, 0 0, 0 0, 0 0 !important;
+      transform: none !important;
+    }
+  }
+}
+
+@keyframes pixel-panel-pattern-drift {
+  0% {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  25% {
+    background-position: 10px 0, -8px 6px, 10px -6px, -12px 8px;
+  }
+  50% {
+    background-position: 18px 10px, -16px 14px, 20px -14px, -22px 18px;
+  }
+  75% {
+    background-position: 28px 12px, -24px 18px, 30px -18px, -30px 22px;
+  }
+  100% {
+    background-position: 34px 34px, -28px 28px, 42px -24px, -44px 32px;
+  }
+}
+
+@keyframes pixel-panel-pattern-breathe {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0.001deg);
+  }
+  50% {
+    transform: translate3d(-6px, 5px, 0) scale(1.015) rotate(0.001deg);
+  }
+}
