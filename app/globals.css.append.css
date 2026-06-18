@@ -1,5 +1,5 @@
 
-/* Pixel-system enforcement: one visual language and obvious click targets */
+/* Pixel-system enforcement: one visual language, SPA-feeling transitions and obvious click targets */
 @layer base {
   button,
   a,
@@ -83,6 +83,17 @@
   }
 }
 
+@keyframes view-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes transfer-in {
   0% {
     opacity: 0;
@@ -105,10 +116,25 @@
   }
 }
 
+.animate-view-enter {
+  animation: view-enter 0.24s steps(6, end) both;
+}
+
 .animate-transfer-in {
   animation: transfer-in 0.22s steps(5, end) both;
 }
 
 .animate-transfer-back {
   animation-name: transfer-back;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-view-enter,
+  .animate-transfer-in,
+  .animate-transfer-back,
+  .pixel-loader span,
+  .pixel-skeleton::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
