@@ -6,7 +6,7 @@ import { PreferencesPanel } from "@/components/banking/preferences-panel"
 export default function PreferencesPage() {
   return (
     <div className="min-h-svh bg-background neo-mobile-shell">
-      <header className="sticky top-0 z-20 border-b-2 border-foreground bg-background/92 px-4 py-3 backdrop-blur-md md:px-6">
+      <header className="sticky top-0 z-20 border-b-2 border-foreground bg-background/90 px-4 py-3 backdrop-blur-md md:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3">
           <Link href="/" className="pixel-btn inline-flex h-10 items-center gap-2 bg-card px-3 font-pixel text-[10px] uppercase text-foreground">
             <ArrowLeft className="h-4 w-4" />
