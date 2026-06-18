@@ -18,7 +18,7 @@ export function Topbar() {
   const { profileName, t } = useAppPreferences()
 
   return (
-    <header className="neo-topbar sticky top-0 z-20 border-b-2 border-foreground bg-background/92 px-3 py-3 backdrop-blur-md md:px-6">
+    <header className="neo-topbar sticky top-0 z-20 border-b-2 border-foreground bg-background/90 px-3 py-3 backdrop-blur-md md:px-6">
       <div className="neo-topbar__rail mx-auto max-w-7xl">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/" className="flex items-center gap-2" data-cursor="pointer" aria-label="VOXEL">
