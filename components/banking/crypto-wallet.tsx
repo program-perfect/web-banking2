@@ -12,13 +12,13 @@ export function CryptoWallet() {
   const totalValue = cryptoAssets.reduce((s, a) => s + a.amount * a.priceUsd, 0)
 
   return (
-    <section className="rounded-3xl border border-border bg-card p-5 shadow-sm md:p-6">
-      <div className="flex items-center justify-between">
+    <section className="pixel-card p-5 md:p-6">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">BLOK Wallet</h2>
           <p className="text-xs text-muted-foreground">VOXL, PIXL and stable assets</p>
         </div>
-        <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground">
+        <span className="border-2 border-foreground bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground">
           On-chain
         </span>
       </div>
@@ -35,7 +35,7 @@ export function CryptoWallet() {
         ].map(({ label, icon: Icon }) => (
           <button
             key={label}
-            className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-secondary/50 py-3 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
+            className="flex flex-col items-center gap-1.5 border-2 border-foreground bg-card py-3 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
           >
             <Icon className="h-4 w-4 text-primary" />
             {label}
@@ -43,15 +43,15 @@ export function CryptoWallet() {
         ))}
       </div>
 
-      <ul className="mt-5 flex flex-col gap-1">
+      <ul className="mt-5 flex flex-col gap-2">
         {cryptoAssets.map((a) => {
           const value = a.amount * a.priceUsd
           const up = a.change24h >= 0
           return (
-            <li key={a.id} className="flex items-center gap-3 rounded-xl px-1 py-2.5">
+            <li key={a.id} className="flex items-center gap-3 border-2 border-border bg-secondary/60 p-3">
               <span
                 className={cn(
-                  "inline-flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold",
+                  "inline-flex h-10 w-10 items-center justify-center border-2 border-foreground text-xs font-bold",
                   symbolStyles[a.symbol] ?? "bg-secondary text-secondary-foreground",
                 )}
               >
