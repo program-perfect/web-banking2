@@ -1,6 +1,7 @@
 "use client"
 
-import { Search, Bell, Plus } from "lucide-react"
+import Link from "next/link"
+import { Search, Bell, Plus, SlidersHorizontal } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { BrandMark } from "./brand-mark"
 
@@ -23,6 +24,14 @@ export function Topbar() {
           className="h-10 w-full border-2 border-foreground bg-secondary pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:bg-card"
         />
       </div>
+
+      <Link
+        href="/preferences"
+        className="pixel-btn inline-flex h-10 items-center gap-2 bg-card px-3 font-pixel text-[10px] uppercase text-foreground"
+      >
+        <SlidersHorizontal className="h-4 w-4" />
+        <span className="hidden sm:inline">Settings</span>
+      </Link>
 
       <button className="pixel-btn ml-auto inline-flex h-10 items-center gap-2 bg-primary px-4 font-pixel text-[10px] uppercase text-primary-foreground md:ml-0">
         <Plus className="h-4 w-4" />

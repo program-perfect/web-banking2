@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import {
   LayoutDashboard,
@@ -9,6 +10,7 @@ import {
   PiggyBank,
   Receipt,
   LifeBuoy,
+  SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -64,7 +66,7 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
               key={item.id}
               onClick={() => navigate(item.id)}
               className={cn(
-                "flex items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all duration-150",
+                "flex cursor-pointer items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all duration-150",
                 isActive
                   ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm"
                   : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground",
@@ -79,10 +81,18 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
       </nav>
 
       <div className="mt-auto flex flex-col gap-1.5">
+        <Link
+          href="/preferences"
+          className="flex cursor-pointer items-center gap-3 border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground"
+        >
+          <SlidersHorizontal className="h-[18px] w-[18px]" />
+          Settings
+        </Link>
+
         <button
           onClick={() => navigate("support")}
           className={cn(
-            "flex items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all",
+            "flex cursor-pointer items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all",
             selected === "support"
               ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm"
               : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground",
@@ -94,16 +104,16 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
         </button>
 
         <div className="mt-3 border-2 border-foreground bg-accent p-4 pixel-shadow">
-          <p className="font-pixel text-[10px] uppercase leading-relaxed text-accent-foreground">Earn 4.6% APY</p>
+          <p className="font-pixel text-[10px] uppercase leading-relaxed text-accent-foreground">Control center</p>
           <p className="mt-2 text-xs leading-relaxed text-accent-foreground/80">
-            Stake BLOK directly from your wallet and grow your balance.
+            Theme, animation and cursor options now live in Settings.
           </p>
-          <button
-            onClick={() => navigate("wallet")}
-            className="pixel-btn mt-3 w-full bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground"
+          <Link
+            href="/preferences"
+            className="pixel-btn mt-3 inline-flex w-full cursor-pointer justify-center bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground"
           >
-            Start staking
-          </button>
+            Open settings
+          </Link>
         </div>
       </div>
     </aside>
