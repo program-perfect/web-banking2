@@ -3,8 +3,8 @@ import { cryptoAssets, formatUsd } from "@/lib/bank-data"
 import { cn } from "@/lib/utils"
 
 const symbolStyles: Record<string, string> = {
-  TON: "bg-primary text-primary-foreground",
-  GRAM: "bg-accent text-accent-foreground",
+  VOXL: "bg-primary text-primary-foreground",
+  PIXL: "bg-accent text-accent-foreground",
   USDT: "bg-secondary text-secondary-foreground",
 }
 
@@ -15,8 +15,8 @@ export function CryptoWallet() {
     <section className="rounded-3xl border border-border bg-card p-5 shadow-sm md:p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-foreground">TON Wallet</h2>
-          <p className="text-xs text-muted-foreground">Toncoin & GRAM assets</p>
+          <h2 className="text-base font-semibold text-foreground">BLOK Wallet</h2>
+          <p className="text-xs text-muted-foreground">VOXL, PIXL and stable assets</p>
         </div>
         <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground">
           On-chain

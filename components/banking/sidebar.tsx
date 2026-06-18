@@ -8,23 +8,42 @@ import {
   Wallet,
   PiggyBank,
   Receipt,
-  Settings,
   LifeBuoy,
+  type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "./brand-mark"
 
-const nav = [
-  { id: "home", label: "Dashboard", icon: LayoutDashboard },
+export type BankingView = "dashboard" | "cards" | "payments" | "wallet" | "savings" | "bills" | "support"
+
+export type BankingNavItem = {
+  id: BankingView
+  label: string
+  icon: LucideIcon
+}
+
+export const bankingNavItems: BankingNavItem[] = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "cards", label: "Cards", icon: CreditCard },
-  { id: "transfer", label: "Payments", icon: ArrowLeftRight },
-  { id: "crypto", label: "VOXEL Wallet", icon: Wallet },
+  { id: "payments", label: "Payments", icon: ArrowLeftRight },
+  { id: "wallet", label: "BLOK Wallet", icon: Wallet },
   { id: "savings", label: "Savings", icon: PiggyBank },
   { id: "bills", label: "Bills", icon: Receipt },
 ]
 
-export function Sidebar() {
-  const [active, setActive] = useState("home")
+type SidebarProps = {
+  active?: BankingView
+  onNavigate?: (view: BankingView) => void
+}
+
+export function Sidebar({ active, onNavigate }: SidebarProps) {
+  const [internalActive, setInternalActive] = useState<BankingView>("dashboard")
+  const selected = active ?? internalActive
+
+  function navigate(view: BankingView) {
+    setInternalActive(view)
+    onNavigate?.(view)
+  }
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r-2 border-foreground bg-sidebar p-4 lg:flex">
@@ -35,15 +54,15 @@ export function Sidebar() {
         <span className="font-pixel text-sm tracking-tight text-foreground">VOXEL</span>
       </div>
 
-      <nav className="mt-7 flex flex-col gap-1.5">
+      <nav className="mt-7 flex flex-col gap-1.5" aria-label="Main banking navigation">
         <p className="px-1 pb-2 font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Menu</p>
-        {nav.map((item) => {
+        {bankingNavItems.map((item) => {
           const Icon = item.icon
-          const isActive = active === item.id
+          const isActive = selected === item.id
           return (
             <button
               key={item.id}
-              onClick={() => setActive(item.id)}
+              onClick={() => navigate(item.id)}
               className={cn(
                 "flex items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all duration-150",
                 isActive
@@ -60,11 +79,16 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto flex flex-col gap-1.5">
-        <button className="flex items-center gap-3 border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground">
-          <Settings className="h-[18px] w-[18px]" />
-          Settings
-        </button>
-        <button className="flex items-center gap-3 border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground">
+        <button
+          onClick={() => navigate("support")}
+          className={cn(
+            "flex items-center gap-3 border-2 px-3 py-2.5 text-sm font-semibold transition-all",
+            selected === "support"
+              ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm"
+              : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground",
+          )}
+          aria-current={selected === "support" ? "page" : undefined}
+        >
           <LifeBuoy className="h-[18px] w-[18px]" />
           Support
         </button>
@@ -72,9 +96,12 @@ export function Sidebar() {
         <div className="mt-3 border-2 border-foreground bg-accent p-4 pixel-shadow">
           <p className="font-pixel text-[10px] uppercase leading-relaxed text-accent-foreground">Earn 4.6% APY</p>
           <p className="mt-2 text-xs leading-relaxed text-accent-foreground/80">
-            Stake your VOXL directly from your wallet and grow your balance.
+            Stake BLOK directly from your wallet and grow your balance.
           </p>
-          <button className="pixel-btn mt-3 w-full bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground">
+          <button
+            onClick={() => navigate("wallet")}
+            className="pixel-btn mt-3 w-full bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground"
+          >
             Start staking
           </button>
         </div>
