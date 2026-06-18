@@ -1,0 +1,236 @@
+/* Performance budget: keep the neo-brutalist UI, but remove paint-heavy continuous motion.
+   Loaded last on purpose so it caps older animation layers from PR #6/#7. */
+
+@layer base {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  body {
+    background-attachment: scroll !important;
+  }
+}
+
+@layer components {
+  /* The old hover shader animated background-position on many pseudo-elements.
+     That causes constant repainting. Keep the texture as a static hover/focus reveal. */
+  .pixel-card::before,
+  .pixel-surface::before,
+  .pixel-btn::before,
+  .pixel-gradient::before,
+  .payment-hero-card::before,
+  .receipt-glow-ring::before,
+  .neo-topbar::after,
+  .neo-mobile-action::before,
+  [data-panel]::before,
+  [data-hover-panel]::before,
+  [role="button"]::before,
+  [role="tab"]::before,
+  [role="option"]::before {
+    animation: none !important;
+    will-change: auto !important;
+    background-position: 0 0, 0 0, 0 0, 0 0 !important;
+    transform: none !important;
+    transition: opacity 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out !important;
+    filter: none !important;
+  }
+
+  html[data-motion="full"] .pixel-card:hover::before,
+  html[data-motion="full"] .pixel-card:focus-within::before,
+  html[data-motion="full"] .pixel-surface:hover::before,
+  html[data-motion="full"] .pixel-surface:focus-within::before,
+  html[data-motion="full"] .pixel-btn:hover::before,
+  html[data-motion="full"] .pixel-btn:focus-visible::before,
+  html[data-motion="full"] .pixel-gradient:hover::before,
+  html[data-motion="full"] .pixel-gradient:focus-within::before,
+  html[data-motion="full"] .payment-hero-card:hover::before,
+  html[data-motion="full"] .payment-hero-card:focus-within::before,
+  html[data-motion="full"] .receipt-glow-ring:hover::before,
+  html[data-motion="full"] .receipt-glow-ring:focus-within::before,
+  html[data-motion="full"] .neo-topbar:hover::after,
+  html[data-motion="full"] .neo-topbar:focus-within::after,
+  html[data-motion="full"] .neo-mobile-action:hover::before,
+  html[data-motion="full"] .neo-mobile-action:focus-visible::before,
+  html[data-motion="full"] [data-panel]:hover::before,
+  html[data-motion="full"] [data-panel]:focus-within::before,
+  html[data-motion="full"] [data-hover-panel]:hover::before,
+  html[data-motion="full"] [data-hover-panel]:focus-within::before,
+  html[data-motion="full"] [role="button"]:hover::before,
+  html[data-motion="full"] [role="button"]:focus-visible::before,
+  html[data-motion="full"] [role="tab"]:hover::before,
+  html[data-motion="full"] [role="tab"]:focus-visible::before,
+  html[data-motion="full"] [role="option"]:hover::before,
+  html[data-motion="full"] [role="option"]:focus-visible::before,
+  html[data-motion="balanced"] .pixel-card:hover::before,
+  html[data-motion="balanced"] .pixel-card:focus-within::before,
+  html[data-motion="balanced"] .pixel-surface:hover::before,
+  html[data-motion="balanced"] .pixel-surface:focus-within::before,
+  html[data-motion="balanced"] .pixel-btn:hover::before,
+  html[data-motion="balanced"] .pixel-btn:focus-visible::before,
+  html[data-motion="balanced"] .pixel-gradient:hover::before,
+  html[data-motion="balanced"] .pixel-gradient:focus-within::before,
+  html[data-motion="balanced"] .payment-hero-card:hover::before,
+  html[data-motion="balanced"] .payment-hero-card:focus-within::before,
+  html[data-motion="balanced"] .receipt-glow-ring:hover::before,
+  html[data-motion="balanced"] .receipt-glow-ring:focus-within::before,
+  html[data-motion="balanced"] .neo-topbar:hover::after,
+  html[data-motion="balanced"] .neo-topbar:focus-within::after,
+  html[data-motion="balanced"] .neo-mobile-action:hover::before,
+  html[data-motion="balanced"] .neo-mobile-action:focus-visible::before,
+  html[data-motion="balanced"] [data-panel]:hover::before,
+  html[data-motion="balanced"] [data-panel]:focus-within::before,
+  html[data-motion="balanced"] [data-hover-panel]:hover::before,
+  html[data-motion="balanced"] [data-hover-panel]:focus-within::before,
+  html[data-motion="balanced"] [role="button"]:hover::before,
+  html[data-motion="balanced"] [role="button"]:focus-visible::before,
+  html[data-motion="balanced"] [role="tab"]:hover::before,
+  html[data-motion="balanced"] [role="tab"]:focus-visible::before,
+  html[data-motion="balanced"] [role="option"]:hover::before,
+  html[data-motion="balanced"] [role="option"]:focus-visible::before {
+    animation: none !important;
+    will-change: auto !important;
+  }
+
+  /* Prefer static skeletons. Continuous skeleton shimmer was repaint-heavy on dense pages. */
+  .pixel-skeleton,
+  .pixel-skeleton::after {
+    animation: none !important;
+  }
+
+  .pixel-skeleton::after {
+    display: none !important;
+  }
+
+  /* Loaders stay readable, but only step slowly. They should not run dozens of fast loops. */
+  .pixel-loader span,
+  .pixel-loader--coin::before,
+  .pixel-loader--coin::after,
+  .pixel-loader--dots span,
+  .pixel-loader--card::after,
+  .pixel-loader--orbit {
+    animation-duration: 1.8s !important;
+    animation-timing-function: steps(2, end) !important;
+  }
+
+  html[data-motion="reduced"] .pixel-loader span,
+  html[data-motion="reduced"] .pixel-loader--coin::before,
+  html[data-motion="reduced"] .pixel-loader--coin::after,
+  html[data-motion="reduced"] .pixel-loader--dots span,
+  html[data-motion="reduced"] .pixel-loader--card::after,
+  html[data-motion="reduced"] .pixel-loader--orbit {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Success effects become a short one-shot instead of an infinite firework loop. */
+  .pixel-firework,
+  .pixel-coin-burst,
+  .pixel-confetti,
+  .receipt-glow-ring::after {
+    animation-iteration-count: 1 !important;
+    will-change: auto !important;
+  }
+
+  .receipt-glow-ring::after {
+    animation: none !important;
+    opacity: 0.32 !important;
+  }
+
+  /* Kill expensive cursor glow pulses. The sprite cursor itself remains. */
+  .pixel-cursor,
+  .pixel-cursor__sprite,
+  .pixel-cursor__halo {
+    transition-duration: 80ms !important;
+  }
+
+  .pixel-cursor__halo {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .pixel-cursor[data-mode="text"] .pixel-cursor__sprite,
+  .pixel-cursor[data-mode="wait"] .pixel-cursor__sprite {
+    animation: none !important;
+  }
+
+  /* Remove blur/filter work from animated screen entrances. */
+  .animate-view-enter,
+  .animate-transfer-in,
+  .animate-transfer-back {
+    animation-duration: 160ms !important;
+    filter: none !important;
+  }
+
+  html[data-motion="reduced"] .animate-view-enter,
+  html[data-motion="reduced"] .animate-transfer-in,
+  html[data-motion="reduced"] .animate-transfer-back {
+    animation: none !important;
+  }
+
+  .pixel-card,
+  .pixel-pressable,
+  .pixel-btn,
+  .neo-topbar__action,
+  .neo-topbar__transfer {
+    transition-duration: 120ms !important;
+    transition-property: transform, box-shadow, background-color, color, border-color, opacity !important;
+  }
+
+  /* Glow is the first thing that makes the page feel heavy. Keep it off unless explicitly re-enabled. */
+  html[data-neo-glow="false"] .pixel-card,
+  html[data-neo-glow="false"] .pixel-surface,
+  html[data-neo-glow="false"] .pixel-btn,
+  html[data-neo-glow="false"] .payment-hero-card,
+  html[data-neo-glow="false"] .receipt-glow-ring {
+    filter: none !important;
+    text-shadow: none !important;
+  }
+
+  @media (max-width: 1023px), (hover: none), (pointer: coarse), (update: slow) {
+    .pixel-card::before,
+    .pixel-surface::before,
+    .pixel-btn::before,
+    .pixel-gradient::before,
+    .payment-hero-card::before,
+    .receipt-glow-ring::before,
+    .neo-topbar::after,
+    .neo-mobile-action::before,
+    [data-panel]::before,
+    [data-hover-panel]::before,
+    [role="button"]::before,
+    [role="tab"]::before,
+    [role="option"]::before {
+      animation: none !important;
+      transition: none !important;
+      opacity: 0 !important;
+      background-image: none !important;
+      filter: none !important;
+      transform: none !important;
+    }
+
+    .neo-topbar::before {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      transition: opacity 120ms ease-out !important;
+    }
+
+    .pixel-card:hover,
+    .pixel-pressable:hover,
+    .pixel-btn:hover,
+    .neo-topbar__action:hover,
+    .neo-topbar__transfer:hover {
+      transform: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
