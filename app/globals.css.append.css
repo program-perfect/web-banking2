@@ -1,8 +1,34 @@
-/* Pixel-system enforcement: one visual language, SPA-feeling transitions, skeleton states and custom cursor */
+/* Neo-brutal pixel-system enforcement: one visual language, SPA-feeling transitions, skeleton states and custom cursor */
+:root {
+  --neo-border-width: 2px;
+  --neo-radius-card: 24px;
+  --neo-radius-inner: 18px;
+  --neo-radius-control: 999px;
+  --neo-shadow: 8px 8px 0 0 var(--foreground);
+  --neo-shadow-hover: 12px 12px 0 0 var(--foreground);
+  --neo-shadow-pressed: 2px 2px 0 0 var(--foreground);
+  --pixel-cursor-size: 5px;
+}
+
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100svh;
+    background-image:
+      radial-gradient(circle at 12% 8%, color-mix(in oklch, var(--primary) 18%, transparent) 0 18%, transparent 29%),
+      radial-gradient(circle at 88% 0%, color-mix(in oklch, var(--accent) 25%, transparent) 0 16%, transparent 28%),
+      linear-gradient(135deg, color-mix(in oklch, var(--primary) 8%, transparent), transparent 35%),
+      linear-gradient(var(--background), var(--background));
+    background-attachment: fixed;
+  }
+
   button,
   a,
   [role="button"],
+  [role="tab"],
   summary,
   select,
   input[type="checkbox"],
@@ -26,60 +52,162 @@
 }
 
 @layer components {
+  .pixel-surface,
+  .pixel-card,
+  .pixel-btn,
+  input,
+  textarea,
+  select,
+  [class*="border-2"][class*="border-foreground"] {
+    border-color: var(--foreground);
+  }
+
   .pixel-surface {
-    border: 2px solid var(--foreground);
+    border: var(--neo-border-width) solid var(--foreground);
+    border-radius: var(--neo-radius-inner);
     background: var(--card);
+    box-shadow: 4px 4px 0 0 var(--foreground);
+  }
+
+  .pixel-card {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border: var(--neo-border-width) solid var(--foreground);
+    border-radius: var(--neo-radius-card);
+    background: var(--card);
+    box-shadow: var(--neo-shadow);
+    transform: translate3d(0, 0, 0);
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .pixel-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg, color-mix(in oklch, var(--primary) 18%, transparent), transparent 38%),
+      radial-gradient(circle at 92% 12%, color-mix(in oklch, var(--accent) 22%, transparent), transparent 26%);
+    opacity: 0.45;
+  }
+
+  .pixel-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--neo-shadow-hover);
+  }
+
+  .pixel-card [class*="border-2"][class*="border-foreground"],
+  .pixel-card [class*="border-2"][class*="border-border"] {
+    border-radius: var(--neo-radius-inner);
+  }
+
+  .pixel-card .rounded-none {
+    border-radius: var(--neo-radius-inner) !important;
+  }
+
+  .pixel-shadow {
+    border-radius: var(--neo-radius-inner);
+    box-shadow: 6px 6px 0 0 var(--foreground);
+  }
+
+  .pixel-shadow-sm {
+    border-radius: var(--neo-radius-inner);
+    box-shadow: 4px 4px 0 0 var(--foreground);
   }
 
   .pixel-pressable {
     transition:
-      transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1),
       background-color 0.18s ease,
       border-color 0.18s ease,
-      opacity 0.18s ease;
+      opacity 0.18s ease,
+      filter 0.18s ease;
   }
 
   .pixel-pressable:hover {
-    transform: translate(-1px, -1px);
+    transform: translate(-2px, -2px);
+    filter: saturate(1.08);
   }
 
   .pixel-pressable:active {
-    transform: translate(2px, 2px);
+    transform: translate(3px, 3px);
+  }
+
+  .pixel-btn {
+    border: var(--neo-border-width) solid var(--foreground);
+    border-radius: var(--neo-radius-control);
+    box-shadow: 4px 4px 0 0 var(--foreground);
+  }
+
+  .pixel-btn:hover {
+    box-shadow: 7px 7px 0 0 var(--foreground);
+  }
+
+  .pixel-btn:active {
+    box-shadow: var(--neo-shadow-pressed);
+  }
+
+  input,
+  textarea,
+  select {
+    border-radius: var(--neo-radius-inner);
+  }
+
+  .pixel-grid {
+    background-image:
+      linear-gradient(color-mix(in oklch, var(--foreground) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklch, var(--foreground) 7%, transparent) 1px, transparent 1px);
+    background-size: 16px 16px;
   }
 
   .pixel-skeleton {
     position: relative;
     overflow: hidden;
+    border-radius: var(--neo-radius-inner);
+    background-color: color-mix(in oklch, var(--secondary) 88%, var(--foreground) 4%);
     background-image:
-      linear-gradient(45deg, color-mix(in oklch, var(--foreground) 6%, transparent) 25%, transparent 25%),
-      linear-gradient(-45deg, color-mix(in oklch, var(--foreground) 6%, transparent) 25%, transparent 25%);
-    background-size: 12px 12px;
+      linear-gradient(45deg, color-mix(in oklch, var(--foreground) 8%, transparent) 25%, transparent 25%),
+      linear-gradient(-45deg, color-mix(in oklch, var(--foreground) 8%, transparent) 25%, transparent 25%);
+    background-size: 14px 14px;
+    animation: pixel-skeleton-grid 1.8s steps(8, end) infinite;
   }
 
   .pixel-skeleton::after {
     content: "";
     position: absolute;
     inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--foreground) 14%, transparent), transparent);
-    animation: pixel-skeleton-scan 1.05s steps(9, end) infinite;
+    transform: translateX(-120%);
+    background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--card) 58%, transparent), transparent);
+    animation: pixel-skeleton-scan 1.08s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
 
   .pixel-loader {
     display: grid;
-    grid-template-columns: repeat(4, 14px);
+    grid-template-columns: repeat(4, 16px);
     gap: 8px;
+    padding: 10px;
+    border: 2px solid var(--foreground);
+    border-radius: var(--neo-radius-inner);
+    background: var(--card);
+    box-shadow: 5px 5px 0 0 var(--foreground);
   }
 
   .pixel-loader span {
     display: block;
-    width: 14px;
+    width: 16px;
     height: 46px;
     border: 2px solid var(--foreground);
+    border-radius: 8px 8px 4px 4px;
     background: var(--primary);
     transform-origin: bottom;
-    animation: pixel-loader-bar 0.8s steps(4, end) infinite;
+    animation: pixel-loader-bar 0.78s steps(4, end) infinite;
   }
 
   .pixel-loader span:nth-child(2) {
@@ -96,11 +224,12 @@
 
   .pixel-loader--coin {
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 76px;
+    height: 76px;
     border: 2px solid var(--foreground);
+    border-radius: 22px;
     background: var(--card);
-    box-shadow: 5px 5px 0 0 var(--foreground);
+    box-shadow: 6px 6px 0 0 var(--foreground);
   }
 
   .pixel-loader--coin::before,
@@ -109,12 +238,13 @@
     position: absolute;
     inset: 14px;
     border: 2px solid var(--foreground);
+    border-radius: 999px;
     background: var(--primary);
     animation: pixel-coin-flip 0.9s steps(5, end) infinite;
   }
 
   .pixel-loader--coin::after {
-    inset: 24px;
+    inset: 25px;
     background: var(--card);
     animation-delay: 0.2s;
   }
@@ -122,13 +252,19 @@
   .pixel-loader--dots {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+    border: 2px solid var(--foreground);
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: 4px 4px 0 0 var(--foreground);
+    padding: 9px 12px;
   }
 
   .pixel-loader--dots span {
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     border: 2px solid var(--foreground);
+    border-radius: 999px;
     background: var(--primary);
     animation: pixel-dot-jump 0.75s steps(3, end) infinite;
   }
@@ -141,16 +277,89 @@
     animation-delay: 0.24s;
   }
 
+  .pixel-loader--card {
+    position: relative;
+    width: 138px;
+    height: 86px;
+    border: 2px solid var(--foreground);
+    border-radius: 22px;
+    background: var(--card);
+    box-shadow: 7px 7px 0 0 var(--foreground);
+    overflow: hidden;
+  }
+
+  .pixel-loader--card::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    width: 34px;
+    height: 24px;
+    border: 2px solid var(--foreground);
+    border-radius: 10px;
+    background: var(--primary);
+    box-shadow: 54px 4px 0 -8px var(--foreground), 54px 22px 0 -8px var(--foreground);
+  }
+
+  .pixel-loader--card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-120%);
+    background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--primary) 35%, transparent), transparent);
+    animation: pixel-card-swipe 1.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  .pixel-loader--orbit {
+    position: relative;
+    width: 86px;
+    height: 86px;
+    border: 2px solid var(--foreground);
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: 5px 5px 0 0 var(--foreground);
+    animation: pixel-orbit-tilt 0.9s steps(4, end) infinite;
+  }
+
+  .pixel-loader--orbit span {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--foreground);
+    border-radius: 999px;
+    background: var(--primary);
+  }
+
+  .pixel-loader--orbit span:nth-child(1) {
+    left: 34px;
+    top: 8px;
+  }
+
+  .pixel-loader--orbit span:nth-child(2) {
+    right: 8px;
+    top: 34px;
+  }
+
+  .pixel-loader--orbit span:nth-child(3) {
+    bottom: 8px;
+    left: 34px;
+  }
+
+  .pixel-loader--orbit span:nth-child(4) {
+    left: 8px;
+    top: 34px;
+  }
+
   .pixel-cursor {
     position: fixed;
     z-index: 2147483647;
     left: 0;
     top: 0;
-    width: 54px;
-    height: 54px;
+    width: max-content;
+    height: max-content;
     pointer-events: none;
-    transform: translate3d(-120px, -120px, 0);
-    transition: opacity 0.12s ease, filter 0.12s ease;
+    transform: translate3d(-140px, -140px, 0);
+    transition: opacity 0.16s ease;
     will-change: transform;
   }
 
@@ -158,64 +367,105 @@
     opacity: 0;
   }
 
-  .pixel-cursor__grid {
+  .pixel-cursor__halo {
+    position: absolute;
+    left: -10px;
+    top: -10px;
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--foreground);
+    border-radius: 999px;
+    opacity: 0;
+    transform: scale(0.62);
+    background: color-mix(in oklch, var(--primary) 28%, transparent);
+  }
+
+  .pixel-cursor__sprite {
     display: grid;
-    grid-template-columns: repeat(9, 6px);
-    grid-template-rows: repeat(9, 6px);
     filter: drop-shadow(2px 2px 0 var(--background));
+    transform-origin: 8px 8px;
+    transition:
+      transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.18s ease,
+      opacity 0.18s ease;
   }
 
   .pixel-cursor__cell {
-    width: 6px;
-    height: 6px;
-    background: var(--foreground);
+    width: var(--pixel-cursor-size);
+    height: var(--pixel-cursor-size);
   }
 
   .pixel-cursor__cell--empty {
-    width: 6px;
-    height: 6px;
+    background: transparent;
   }
 
-  .pixel-cursor__pulse {
-    position: absolute;
-    left: 24px;
-    top: 24px;
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--foreground);
-    opacity: 0;
-    transform: scale(0.4);
+  .pixel-cursor__cell--ink {
+    background: var(--foreground);
   }
 
-  .pixel-cursor[data-interactive="true"] .pixel-cursor__cell {
+  .pixel-cursor__cell--paper {
+    background: var(--card);
+    box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--foreground) 12%, transparent);
+  }
+
+  .pixel-cursor__cell--accent {
     background: var(--primary);
     box-shadow: inset 0 0 0 1px var(--foreground);
   }
 
-  .pixel-cursor[data-interactive="true"] .pixel-cursor__pulse {
-    opacity: 0.8;
-    animation: pixel-cursor-pulse 0.65s steps(4, end) infinite;
+  .pixel-cursor[data-mode="pointer"] .pixel-cursor__sprite,
+  .pixel-cursor[data-mode="press"] .pixel-cursor__sprite {
+    transform: scale(1.08) rotate(-3deg);
   }
 
-  .pixel-cursor[data-pressed="true"] {
-    filter: brightness(0.85);
+  .pixel-cursor[data-mode="text"] .pixel-cursor__sprite {
+    animation: pixel-cursor-text 0.78s steps(2, end) infinite;
   }
 
-  .pixel-cursor[data-pressed="true"] .pixel-cursor__grid {
-    transform: translate(2px, 2px);
+  .pixel-cursor[data-mode="grab"] .pixel-cursor__sprite {
+    transform: scale(1.04) rotate(2deg);
+  }
+
+  .pixel-cursor[data-mode="grabbing"] .pixel-cursor__sprite,
+  .pixel-cursor[data-mode="press"] .pixel-cursor__sprite {
+    transform: scale(0.92) translate(2px, 2px);
+    filter: drop-shadow(1px 1px 0 var(--background)) brightness(0.92);
+  }
+
+  .pixel-cursor[data-mode="wait"] .pixel-cursor__sprite {
+    animation: pixel-cursor-wait 0.78s steps(4, end) infinite;
+  }
+
+  .pixel-cursor[data-mode="disabled"] .pixel-cursor__sprite {
+    opacity: 0.72;
+    filter: grayscale(1) drop-shadow(2px 2px 0 var(--background));
+  }
+
+  .pixel-cursor[data-mode="pointer"] .pixel-cursor__halo,
+  .pixel-cursor[data-mode="press"] .pixel-cursor__halo,
+  .pixel-cursor[data-mode="grab"] .pixel-cursor__halo,
+  .pixel-cursor[data-mode="grabbing"] .pixel-cursor__halo {
+    opacity: 0.9;
+    animation: pixel-cursor-halo 0.74s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+}
+
+@keyframes pixel-skeleton-grid {
+  100% {
+    background-position: 28px 28px, -28px 28px;
   }
 }
 
 @keyframes pixel-skeleton-scan {
   100% {
-    transform: translateX(100%);
+    transform: translateX(120%);
   }
 }
 
 @keyframes pixel-loader-bar {
   0%,
   100% {
-    transform: scaleY(0.35);
+    transform: scaleY(0.32);
   }
   50% {
     transform: scaleY(1);
@@ -227,7 +477,7 @@
     transform: scaleX(1);
   }
   50% {
-    transform: scaleX(0.2);
+    transform: scaleX(0.18);
   }
   100% {
     transform: scaleX(1);
@@ -240,26 +490,66 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-9px);
   }
 }
 
-@keyframes pixel-cursor-pulse {
+@keyframes pixel-card-swipe {
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes pixel-orbit-tilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(18deg);
+  }
+}
+
+@keyframes pixel-cursor-halo {
   0% {
-    transform: scale(0.4);
-    opacity: 0.8;
+    transform: scale(0.52);
+    opacity: 0.78;
   }
   100% {
-    transform: scale(1.4);
+    transform: scale(1.5);
     opacity: 0;
+  }
+}
+
+@keyframes pixel-cursor-wait {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes pixel-cursor-text {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.58;
   }
 }
 
 @keyframes view-enter {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.995);
-    filter: saturate(0.7);
+    transform: translateY(22px) scale(0.985);
+    filter: blur(2px) saturate(0.78);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.006);
+    filter: blur(0) saturate(1.06);
   }
   100% {
     opacity: 1;
@@ -271,38 +561,42 @@
 @keyframes transfer-in {
   0% {
     opacity: 0;
-    transform: translateX(24px);
+    transform: translateX(28px) rotate(0.35deg);
   }
   100% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) rotate(0deg);
   }
 }
 
 @keyframes transfer-back {
   0% {
     opacity: 0;
-    transform: translateX(-24px);
+    transform: translateX(-28px) rotate(-0.35deg);
   }
   100% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) rotate(0deg);
   }
 }
 
 .animate-view-enter {
-  animation: view-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: view-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-transfer-in {
-  animation: transfer-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: transfer-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-transfer-back {
-  animation-name: transfer-back;
+  animation: transfer-back 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .animate-view-enter,
   .animate-transfer-in,
   .animate-transfer-back,
@@ -310,9 +604,14 @@
   .pixel-loader--coin::before,
   .pixel-loader--coin::after,
   .pixel-loader--dots span,
+  .pixel-loader--card::after,
+  .pixel-loader--orbit,
+  .pixel-skeleton,
   .pixel-skeleton::after,
-  .pixel-cursor__pulse {
+  .pixel-cursor__halo,
+  .pixel-cursor__sprite {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
