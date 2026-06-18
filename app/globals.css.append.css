@@ -1,0 +1,114 @@
+
+/* Pixel-system enforcement: one visual language and obvious click targets */
+@layer base {
+  button,
+  a,
+  [role="button"],
+  summary,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"] {
+    cursor: pointer;
+  }
+
+  input,
+  textarea {
+    cursor: text;
+  }
+}
+
+@layer components {
+  .pixel-surface {
+    border: 2px solid var(--foreground);
+    background: var(--card);
+  }
+
+  .pixel-skeleton {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pixel-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--foreground) 12%, transparent), transparent);
+    animation: pixel-skeleton-scan 1.1s steps(8, end) infinite;
+  }
+
+  .pixel-loader {
+    display: grid;
+    grid-template-columns: repeat(4, 14px);
+    gap: 8px;
+  }
+
+  .pixel-loader span {
+    display: block;
+    width: 14px;
+    height: 46px;
+    border: 2px solid var(--foreground);
+    background: var(--primary);
+    animation: pixel-loader-bar 0.8s steps(4, end) infinite;
+  }
+
+  .pixel-loader span:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+
+  .pixel-loader span:nth-child(3) {
+    animation-delay: 0.24s;
+  }
+
+  .pixel-loader span:nth-child(4) {
+    animation-delay: 0.36s;
+  }
+}
+
+@keyframes pixel-skeleton-scan {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pixel-loader-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes transfer-in {
+  0% {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes transfer-back {
+  0% {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-transfer-in {
+  animation: transfer-in 0.22s steps(5, end) both;
+}
+
+.animate-transfer-back {
+  animation-name: transfer-back;
+}
