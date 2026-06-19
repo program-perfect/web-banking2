@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { type ClipboardEvent, type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useState } from "react"
 import { ArrowLeft, BadgeCheck, EyeOff, FileText, Keyboard, MonitorOff, Play, ReceiptText, ShieldCheck, TimerReset } from "lucide-react"
 import { lipatovSceneConfig } from "@/lib/lipatov-scene-config"
 import { cn } from "@/lib/utils"
-import { PixelButton, PixelCard, PixelFigure, PixelLoader, PixelSkeleton, PixelStatus } from "@/components/banking/pixel-ui"
+import { PixelButton, PixelCard, PixelFigure, PixelInput, PixelLoader, PixelSkeleton, PixelStatus } from "@/components/banking/pixel-ui"
 
 type SceneStep = "ready" | "processing" | "success" | "blackout"
 
@@ -16,15 +16,34 @@ const auditRows = [
   ["Проверка", lipatovSceneConfig.bank.verification],
 ]
 
+const digitFormatter = new Intl.NumberFormat("ru-RU", {
+  maximumFractionDigits: 0,
+  useGrouping: true,
+})
+
+function normalizeAmountDigits(value: string) {
+  const integerPart = value.split(/[.,]/)[0] ?? value
+  const digits = integerPart.replace(/\D/g, "").replace(/^0+(?=\d)/, "")
+  return digits
+}
+
+function formatAmountMask(digits: string) {
+  if (!digits) return ""
+  return `${digitFormatter.format(Number(digits))}.00`
+}
+
 export function LipatovSceneBank() {
   const [step, setStep] = useState<SceneStep>("ready")
   const [lastStep, setLastStep] = useState<Exclude<SceneStep, "blackout">>("ready")
   const [clock, setClock] = useState(0)
   const [showControls, setShowControls] = useState(true)
+  const [amountDigits, setAmountDigits] = useState(() => String(lipatovSceneConfig.transfer.amount))
 
   const isSuccess = step === "success"
   const isProcessing = step === "processing"
   const isBlackout = step === "blackout"
+  const maskedAmount = useMemo(() => formatAmountMask(amountDigits), [amountDigits])
+  const amountReady = amountDigits.length > 0 && Number(amountDigits) > 0
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -43,7 +62,7 @@ export function LipatovSceneBank() {
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [lastStep, step])
+  }, [amountReady, isProcessing, isSuccess, lastStep, step])
 
   useEffect(() => {
     if (step !== "processing") return
@@ -61,13 +80,14 @@ export function LipatovSceneBank() {
   }, [step])
 
   const progressWidth = useMemo(() => {
-    if (step === "ready") return "18%"
+    if (step === "ready") return amountReady ? "28%" : "10%"
     if (step === "processing") return `${Math.min(88, 28 + clock * 14)}%`
     if (step === "success") return "100%"
     return "100%"
-  }, [clock, step])
+  }, [amountReady, clock, step])
 
   function submitRequest() {
+    if (!amountReady || isProcessing || isSuccess) return
     setLastStep("ready")
     setStep("processing")
   }
@@ -136,7 +156,15 @@ export function LipatovSceneBank() {
 
         <section className={cn("grid gap-5 transition-all duration-500 ease-out", showControls ? "lg:grid-cols-[minmax(0,1fr)_340px]" : "lg:grid-cols-1")}>
           <PixelCard className="min-h-[680px] overflow-hidden p-0 transition-all duration-500" as="section">
-            <BankScreen step={step} progressWidth={progressWidth} onSubmit={submitRequest} />
+            <BankScreen
+              amountDigits={amountDigits}
+              amountReady={amountReady}
+              maskedAmount={maskedAmount}
+              onAmountDigitsChange={setAmountDigits}
+              onSubmit={submitRequest}
+              progressWidth={progressWidth}
+              step={step}
+            />
           </PixelCard>
 
           <aside
@@ -158,7 +186,7 @@ export function LipatovSceneBank() {
 
             <PixelCard eyebrow="Горячие клавиши" title="Управление в кадре">
               <div className="space-y-3">
-                <ControlLine icon={Keyboard} label="Enter" value="отправить заявку" />
+                <ControlLine icon={Keyboard} label="Enter" value="проверить платеж" />
                 <ControlLine icon={MonitorOff} label="Esc" value="вернуться из затемнения" />
                 <ControlLine icon={Play} label="F" value="попросить fullscreen" />
               </div>
@@ -178,7 +206,23 @@ export function LipatovSceneBank() {
   )
 }
 
-function BankScreen({ step, progressWidth, onSubmit }: { step: SceneStep; progressWidth: string; onSubmit: () => void }) {
+function BankScreen({
+  amountDigits,
+  amountReady,
+  maskedAmount,
+  onAmountDigitsChange,
+  onSubmit,
+  progressWidth,
+  step,
+}: {
+  amountDigits: string
+  amountReady: boolean
+  maskedAmount: string
+  onAmountDigitsChange: (value: string) => void
+  onSubmit: () => void
+  progressWidth: string
+  step: SceneStep
+}) {
   const isProcessing = step === "processing"
   const isSuccess = step === "success"
   const isReady = step === "ready"
@@ -191,7 +235,7 @@ function BankScreen({ step, progressWidth, onSubmit }: { step: SceneStep; progre
           <h2 className="text-xl font-black tracking-tight">{lipatovSceneConfig.bank.pageTitle}</h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          <PixelStatus tone={isSuccess ? "success" : isProcessing ? "warning" : "info"}>{isSuccess ? "Обработана" : isProcessing ? "Проверка" : "Черновик"}</PixelStatus>
+          <PixelStatus tone={isSuccess ? "success" : isProcessing ? "warning" : amountReady ? "success" : "info"}>{isSuccess ? "Обработана" : isProcessing ? "Проверка" : amountReady ? "К проверке" : "Черновик"}</PixelStatus>
           <PixelStatus tone="info">{lipatovSceneConfig.bank.pageSection}</PixelStatus>
         </div>
       </div>
@@ -200,12 +244,18 @@ function BankScreen({ step, progressWidth, onSubmit }: { step: SceneStep; progre
         <section className="space-y-5">
           <div className="border-2 border-foreground bg-background p-5 pixel-shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Сумма требования</p>
+              <div className="min-w-0 flex-1">
+                <label className="font-pixel text-[9px] uppercase tracking-wider text-muted-foreground" htmlFor="lipatov-amount-input">{lipatovSceneConfig.transfer.amountInputLabel}</label>
                 <div className="mt-2 flex items-end gap-3">
-                  <PixelFigure value={lipatovSceneConfig.transfer.amount} className="text-5xl font-black tracking-tight md:text-6xl" />
+                  <MaskedAmountInput
+                    amountDigits={amountDigits}
+                    disabled={!isReady}
+                    maskedAmount={maskedAmount}
+                    onAmountDigitsChange={onAmountDigitsChange}
+                  />
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">{lipatovSceneConfig.transfer.currencyNote}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{lipatovSceneConfig.transfer.amountMaskHint}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{lipatovSceneConfig.transfer.currencyNote}</p>
               </div>
               <div className="min-w-52 border-2 border-foreground bg-secondary p-3 text-right">
                 <p className="font-pixel text-[9px] uppercase text-muted-foreground">Request ID</p>
@@ -233,10 +283,10 @@ function BankScreen({ step, progressWidth, onSubmit }: { step: SceneStep; progre
             <div className="border-2 border-foreground bg-secondary p-5 animate-view-enter">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-base font-black">Заявка готова к отправке</p>
+                  <p className="text-base font-black">Заявка готова к проверке</p>
                   <p className="mt-1 text-sm text-muted-foreground">{lipatovSceneConfig.sceneControls.enterHint}</p>
                 </div>
-                <PixelButton className="bg-primary text-primary-foreground" onClick={onSubmit}><Keyboard className="h-4 w-4" />ENTER / Отправить</PixelButton>
+                <PixelButton className="bg-primary text-primary-foreground" disabled={!amountReady} onClick={onSubmit}><Keyboard className="h-4 w-4" />ENTER / {lipatovSceneConfig.transfer.checkButtonText}</PixelButton>
               </div>
             </div>
           )}
@@ -278,6 +328,7 @@ function BankScreen({ step, progressWidth, onSubmit }: { step: SceneStep; progre
               <ShieldCheck className="h-5 w-5 text-primary" />
               <h3 className="text-sm font-black">Журнал</h3>
             </div>
+            <TimelineRow active={amountReady} label="Сумма заполнена" time="маска .00" />
             <TimelineRow active={step !== "ready"} label="ENTER принят" time={lipatovSceneConfig.transfer.createdAt} />
             <TimelineRow active={isProcessing || isSuccess} label="Проверка запроса" time="автоматически" />
             <TimelineRow active={isSuccess} label="Заявка обработана" time={lipatovSceneConfig.transfer.processedAt} />
@@ -292,6 +343,61 @@ function BankScreen({ step, progressWidth, onSubmit }: { step: SceneStep; progre
         </section>
       </div>
     </div>
+  )
+}
+
+function MaskedAmountInput({ amountDigits, disabled, maskedAmount, onAmountDigitsChange }: { amountDigits: string; disabled: boolean; maskedAmount: string; onAmountDigitsChange: (value: string) => void }) {
+  function appendDigit(digit: string) {
+    onAmountDigitsChange(normalizeAmountDigits(`${amountDigits}${digit}`))
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return
+
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault()
+      appendDigit(event.key)
+      return
+    }
+
+    if (event.key === "Backspace") {
+      event.preventDefault()
+      onAmountDigitsChange(amountDigits.slice(0, -1))
+      return
+    }
+
+    if (event.key === "Delete") {
+      event.preventDefault()
+      onAmountDigitsChange("")
+      return
+    }
+
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Tab", "Home", "End", "Enter", "Escape"].includes(event.key)) return
+
+    event.preventDefault()
+  }
+
+  function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault()
+    onAmountDigitsChange(normalizeAmountDigits(event.clipboardData.getData("text")))
+  }
+
+  return (
+    <PixelInput
+      aria-label={lipatovSceneConfig.transfer.amountInputLabel}
+      autoComplete="off"
+      className="h-auto min-h-20 bg-card px-4 py-3 font-mono text-5xl font-black tracking-tight md:text-6xl"
+      data-cursor="text"
+      disabled={disabled}
+      id="lipatov-amount-input"
+      inputMode="numeric"
+      onChange={(event) => onAmountDigitsChange(normalizeAmountDigits(event.target.value))}
+      onFocus={(event) => event.currentTarget.select()}
+      onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
+      placeholder="0.00"
+      value={maskedAmount}
+    />
   )
 }
 
