@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeftRight, Bell, CreditCard, Home, Plus, Search, Settings, ShieldCheck, SlidersHorizontal, Wallet } from "lucide-react"
+import { ArrowLeftRight, Bell, CreditCard, Home, MonitorPlay, Plus, Search, Settings, ShieldCheck, SlidersHorizontal, Wallet } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAppPreferences } from "@/components/banking/app-preferences"
 
@@ -10,6 +10,7 @@ const centerActions = [
   { href: "/#payments", labelRu: "Платежи", labelEn: "Payments", icon: ArrowLeftRight },
   { href: "/#cards", labelRu: "Карты", labelEn: "Cards", icon: CreditCard },
   { href: "/#wallet", labelRu: "Кошелёк", labelEn: "Wallet", icon: Wallet },
+  { href: "/scene/lipatov-bank", labelRu: "Сцена", labelEn: "Scene", icon: MonitorPlay },
   { href: "/preferences", labelRu: "Настройки", labelEn: "Settings", icon: Settings },
 ]
 
@@ -53,6 +54,15 @@ export function Topbar() {
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{t("Перевод", "Transfer")}</span>
+          </Link>
+
+          <Link
+            href="/scene/lipatov-bank"
+            className="pixel-btn hide-on-phone inline-flex h-10 items-center gap-2 bg-accent px-3 font-pixel text-[9px] uppercase text-accent-foreground"
+            data-cursor="pointer"
+          >
+            <MonitorPlay className="h-4 w-4" />
+            <span className="hidden lg:inline">{t("Кадр", "Scene")}</span>
           </Link>
 
           <Link
