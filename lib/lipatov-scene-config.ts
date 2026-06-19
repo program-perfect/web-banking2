@@ -20,6 +20,9 @@ export type LipatovSceneConfig = {
   transfer: {
     amount: number
     amountDisplay: string
+    amountInputLabel: string
+    amountMaskHint: string
+    checkButtonText: string
     currencyNote: string
     sender: string
     senderRole: string
@@ -63,6 +66,9 @@ export const lipatovSceneConfig: LipatovSceneConfig = {
   transfer: {
     amount: 300000000,
     amountDisplay: "300 000 000",
+    amountInputLabel: "Сумма требования",
+    amountMaskHint: "Введите сумму целым числом: маска автоматически добавит .00, без ручного ввода точки и копеек.",
+    checkButtonText: "Проверить платеж",
     currencyNote: "Валюта в сценарии не указана, поэтому на экран не выведен знак валюты.",
     sender: "Липатов Илья Сергеевич",
     senderRole: "корпоративный клиент",
@@ -77,7 +83,7 @@ export const lipatovSceneConfig: LipatovSceneConfig = {
     operatorNote: "После поступления средств на счета картель продолжает удерживать Липатова и требует от него еще одно действие.",
   },
   sceneControls: {
-    enterHint: "Нажмите ENTER, чтобы отправить заявку и получить экран результата.",
+    enterHint: "Введите сумму целым числом — .00 добавится автоматически. Нажмите ENTER, чтобы проверить платеж и отправить заявку.",
     blackoutHint: "Для кадра 3-6 оставьте экран с уведомлением, затем погасите дисплей скриптом или кнопкой Blackout preview.",
     screenMessage: "Сигнал дисплея отсутствует",
     offlineMessage: "Ноутбук не отвечает. Повторное нажатие клавиш не меняет состояние.",
