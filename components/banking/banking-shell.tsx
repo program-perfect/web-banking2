@@ -13,6 +13,7 @@ import {
   Landmark,
   LifeBuoy,
   Lock,
+  MonitorPlay,
   Phone,
   PiggyBank,
   Plus,
@@ -179,6 +180,25 @@ function DashboardView() {
         </Link>
       </PixelCard>
 
+      <Link
+        href="/scene/lipatov-bank"
+        className="group relative isolate flex min-h-48 cursor-pointer overflow-hidden border-2 border-foreground bg-accent p-6 text-accent-foreground transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:pixel-shadow-lg lg:col-span-3"
+        data-cursor="pointer"
+      >
+        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border-2 border-foreground bg-primary/40 transition-transform duration-500 group-hover:scale-125" />
+        <div className="relative z-10 flex w-full flex-col justify-between gap-8 md:flex-row md:items-end">
+          <div className="max-w-2xl">
+            <p className="font-pixel text-[9px] uppercase tracking-[0.28em] opacity-70">Scene shortcut / 3-3 + 3-6</p>
+            <h2 className="mt-3 text-4xl font-black leading-none tracking-tight md:text-6xl">Экран банка Липатова</h2>
+            <p className="mt-4 max-w-xl text-sm font-semibold opacity-75">Открыть подготовленный кадр: заявка на перевод, ENTER, обработка и финальное сообщение «Ваша заявка успешно обработана».</p>
+          </div>
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center border-2 border-foreground bg-background text-foreground transition-transform duration-300 group-hover:translate-x-2 group-hover:-translate-y-2">
+            <ArrowUpRight className="h-12 w-12" />
+          </div>
+        </div>
+        <MonitorPlay className="absolute bottom-5 right-36 h-12 w-12 opacity-20" />
+      </Link>
+
       <div className="grid gap-5 lg:col-span-3 md:grid-cols-3">
         <MetricCard icon={CreditCard} label="Карты" value={String(cards.length)} detail="Физические и виртуальные" />
         <MetricCard icon={Wallet} label="BLOK-кошелёк" value={formatUsd(walletTotal)} detail="Активы и стейкинг" />
@@ -278,7 +298,7 @@ function TransferMethodCard({ icon: Icon, label, value }: { icon: LucideIcon; la
   return <div className="border-2 border-foreground bg-card p-3 pixel-shadow-sm"><Icon className="h-5 w-5 text-primary" /><p className="mt-4 text-sm font-black text-foreground">{label}</p><p className="mt-1 text-xs text-muted-foreground">{value}</p></div>
 }
 
-function MetricCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: string; detail: string }) {
+function MetricCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: string }) {
   return <PixelCard><div className="flex items-center justify-between gap-3"><span className="flex h-10 w-10 items-center justify-center border-2 border-foreground bg-secondary"><Icon className="h-4 w-4 text-primary" /></span><ArrowUpRight className="h-4 w-4 text-muted-foreground" /></div><p className="mt-4 text-xs font-black uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-black tracking-tight text-foreground tabular-nums">{value}</p><p className="mt-2 text-xs text-muted-foreground">{detail}</p></PixelCard>
 }
 
