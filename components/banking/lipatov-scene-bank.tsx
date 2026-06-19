@@ -20,6 +20,7 @@ export function LipatovSceneBank() {
   const [step, setStep] = useState<SceneStep>("ready")
   const [lastStep, setLastStep] = useState<Exclude<SceneStep, "blackout">>("ready")
   const [clock, setClock] = useState(0)
+  const [showControls, setShowControls] = useState(true)
 
   const isSuccess = step === "success"
   const isProcessing = step === "processing"
@@ -100,6 +101,16 @@ export function LipatovSceneBank() {
 
   return (
     <main className="min-h-svh bg-background px-4 py-5 text-foreground md:px-6">
+      <button
+        aria-label={showControls ? "Hide scene setup controls" : "Show scene setup controls"}
+        className={cn(
+          "fixed right-3 top-3 z-[80] h-5 w-5 border-2 border-foreground bg-background/20 opacity-0 outline-none transition-all duration-500 hover:scale-125 hover:bg-primary hover:opacity-100 focus-visible:scale-125 focus-visible:bg-primary focus-visible:opacity-100 active:translate-x-0.5 active:translate-y-0.5",
+          !showControls && "opacity-10",
+        )}
+        data-cursor="pointer"
+        onClick={() => setShowControls((value) => !value)}
+      />
+
       <div className="mx-auto max-w-7xl">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 animate-view-enter">
           <div className="flex items-center gap-3">
@@ -112,18 +123,28 @@ export function LipatovSceneBank() {
               <h1 className="text-2xl font-black tracking-tight md:text-3xl">Экран интернет-банка Липатова</h1>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div
+            className={cn(
+              "flex flex-wrap gap-2 overflow-hidden transition-all duration-500 ease-out",
+              showControls ? "max-h-24 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-2 opacity-0",
+            )}
+          >
             <PixelButton onClick={enterFullscreen}><Play className="h-4 w-4" />Fullscreen</PixelButton>
             <PixelButton onClick={openBlackout}><EyeOff className="h-4 w-4" />Blackout preview</PixelButton>
           </div>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <PixelCard className="min-h-[680px] overflow-hidden p-0" as="section">
+        <section className={cn("grid gap-5 transition-all duration-500 ease-out", showControls ? "lg:grid-cols-[minmax(0,1fr)_340px]" : "lg:grid-cols-1")}>
+          <PixelCard className="min-h-[680px] overflow-hidden p-0 transition-all duration-500" as="section">
             <BankScreen step={step} progressWidth={progressWidth} onSubmit={submitRequest} />
           </PixelCard>
 
-          <aside className="space-y-5">
+          <aside
+            className={cn(
+              "space-y-5 overflow-hidden transition-all duration-500 ease-out",
+              showControls ? "max-h-[1200px] translate-x-0 opacity-100" : "pointer-events-none max-h-0 translate-x-5 opacity-0 lg:hidden",
+            )}
+          >
             <PixelCard eyebrow="Сцена" title="Контекст для постановки">
               <div className="space-y-3 text-sm leading-relaxed text-foreground">
                 <p>{lipatovSceneConfig.scene.context}</p>
