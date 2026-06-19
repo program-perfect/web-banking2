@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowLeft,
   ArrowRight,
@@ -21,12 +21,13 @@ import {
   Sparkles,
   UserRound,
   Wallet,
+  type LucideIcon,
 } from "lucide-react"
 import { Topbar } from "@/components/banking/topbar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { accounts, contacts, formatUsd } from "@/lib/bank-data"
+import { accounts, contacts as fallbackContacts, formatUsd } from "@/lib/bank-data"
 import { cn } from "@/lib/utils"
-import { useAppPreferences } from "@/components/banking/app-preferences"
+import { type AppContact, useAppPreferences } from "@/components/banking/app-preferences"
 import { PixelAmount, PixelButton, PixelCard, PixelInput, PixelLoader, PixelSkeleton, PixelStatus } from "@/components/banking/pixel-ui"
 
 type TransferStep = "recipient" | "amount" | "review" | "processing" | "success"
@@ -53,54 +54,54 @@ type TransferRecord = {
 const existingTransfers: Record<string, TransferRecord> = {
   "op-1": {
     id: "op-1",
-    recipient: "Maria Lopez",
+    recipient: "Мария Лопес",
     recipientHandle: "@maria",
-    initials: "ML",
+    initials: "МЛ",
     method: "contact",
     amount: 250,
     fee: 0,
-    source: "Main account · **** 4921",
+    source: "Основной счёт · **** 4921",
     status: "pending",
     createdAt: "Вчера, 18:40",
     operationCode: "VX-2026-OP1-8842",
-    bank: "VOXEL Internal Rail",
-    purpose: "Private transfer",
-    riskScore: "Low",
-    speed: "Instant",
+    bank: "VOXEL внутренний канал",
+    purpose: "Личный перевод",
+    riskScore: "Низкий",
+    speed: "Мгновенно",
   },
   "op-2": {
     id: "op-2",
-    recipient: "James Carter",
-    recipientHandle: "Card · **** 9021",
-    initials: "JC",
+    recipient: "Джеймс Картер",
+    recipientHandle: "Карта · **** 9021",
+    initials: "ДК",
     method: "card",
     amount: 75,
     fee: 0,
-    source: "Main account · **** 4921",
+    source: "Основной счёт · **** 4921",
     status: "completed",
     createdAt: "17 июн, 11:12",
     operationCode: "VX-2026-OP2-3811",
-    bank: "External card network",
-    purpose: "Card-to-card transfer",
-    riskScore: "Low",
-    speed: "Up to 2 min",
+    bank: "Внешняя карточная сеть",
+    purpose: "Перевод на карту",
+    riskScore: "Низкий",
+    speed: "До 2 минут",
   },
   "op-3": {
     id: "op-3",
-    recipient: "Sofia Reyes",
+    recipient: "София Рейес",
     recipientHandle: "+1 555 011 489",
-    initials: "SR",
+    initials: "СР",
     method: "phone",
     amount: 120,
     fee: 0,
-    source: "Main account · **** 4921",
+    source: "Основной счёт · **** 4921",
     status: "completed",
     createdAt: "16 июн, 09:05",
     operationCode: "VX-2026-OP3-1297",
-    bank: "Phone lookup rail",
-    purpose: "Phone transfer",
-    riskScore: "Low",
-    speed: "Instant",
+    bank: "Поиск банка по телефону",
+    purpose: "Перевод по телефону",
+    riskScore: "Низкий",
+    speed: "Мгновенно",
   },
 }
 
@@ -109,46 +110,57 @@ const keypad = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"]
 
 export function TransferFlowPage({ transferId }: { transferId: string }) {
   const router = useRouter()
-  const { profileName, t } = useAppPreferences()
+  const prefs = useAppPreferences()
+  const { profileName, t, transferContacts, transferDefaults, animationSettings } = prefs
   const transferFromHistory = existingTransfers[transferId]
+  const amountInputRef = useRef<HTMLInputElement>(null)
+  const availableContacts: AppContact[] = transferContacts.length > 0 ? transferContacts : fallbackContacts
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState<TransferStep>(transferFromHistory ? "success" : "recipient")
   const [direction, setDirection] = useState<1 | -1>(1)
   const [method, setMethod] = useState<RecipientMethod>("contact")
-  const [selectedContact, setSelectedContact] = useState(contacts[0]?.id ?? "")
+  const [selectedContact, setSelectedContact] = useState(availableContacts[0]?.id ?? "")
   const [cardNumber, setCardNumber] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [amountInput, setAmountInput] = useState("250")
-  const [purpose, setPurpose] = useState("Private transfer")
-  const [showReceipt, setShowReceipt] = useState(Boolean(transferFromHistory))
+  const [amountInput, setAmountInput] = useState(transferDefaults.defaultAmount || "250")
+  const [purpose, setPurpose] = useState(transferDefaults.defaultPurpose || t("Личный перевод", "Private transfer"))
+  const [showReceipt, setShowReceipt] = useState(Boolean(transferFromHistory || transferDefaults.autoOpenReceipt))
 
   const operationCode = useMemo(() => `VX-${transferId.toUpperCase().replace(/[^A-Z0-9]/g, "-")}`, [transferId])
-  const contact = contacts.find((item) => item.id === selectedContact) ?? contacts[0]
+  const contact = availableContacts.find((item) => item.id === selectedContact) ?? availableContacts[0]
   const amount = Math.max(0, Number(amountInput) || 0)
   const sourceAccount = accounts[0]
+  const configuredFee = Math.max(0, Number(transferDefaults.transferFee) || 0)
+  const dailyLimit = Math.max(0, Number(transferDefaults.dailyLimit) || 0)
 
   const draft: TransferRecord = transferFromHistory ?? {
     id: transferId,
-    recipient: method === "contact" ? contact?.name ?? "Recipient" : method === "card" ? t("Получатель по карте", "Card recipient") : t("Получатель по телефону", "Phone recipient"),
-    recipientHandle: method === "contact" ? contact?.handle ?? "@recipient" : method === "card" ? maskCard(cardNumber) : phoneNumber || "+_ ___ ___ ____",
-    initials: method === "contact" ? contact?.initials ?? "RX" : method === "card" ? "CR" : "PH",
+    recipient: method === "contact" ? contact?.name ?? t("Получатель", "Recipient") : method === "card" ? t("Получатель по карте", "Card recipient") : t("Получатель по телефону", "Phone recipient"),
+    recipientHandle: method === "contact" ? contact?.handle ?? "@recipient" : method === "card" ? maskCard(cardNumber, t) : phoneNumber || "+_ ___ ___ ____",
+    initials: method === "contact" ? contact?.initials ?? "ПЛ" : method === "card" ? "КР" : "ТЛ",
     method,
     amount,
-    fee: method === "contact" ? 0 : 0.35,
-    source: `${sourceAccount.name} · ${sourceAccount.number}`,
+    fee: method === "contact" ? 0 : configuredFee,
+    source: `${localizeAccountName(sourceAccount.name)} · ${sourceAccount.number}`,
     status: step === "success" ? "completed" : "pending",
     createdAt: step === "success" ? t("Только что", "Just now") : t("Черновик", "Draft"),
     operationCode,
-    bank: method === "contact" ? "VOXEL Internal Rail" : method === "card" ? "External card network" : "Phone lookup rail",
+    bank: method === "contact" ? transferDefaults.preferredRail : method === "card" ? t("Внешняя карточная сеть", "External card network") : t("Поиск банка по телефону", "Phone lookup rail"),
     purpose,
-    riskScore: "Low",
-    speed: method === "card" ? "Up to 2 min" : "Instant",
+    riskScore: transferDefaults.requireRiskCheck ? t("Низкий", "Low") : t("Отключено", "Disabled"),
+    speed: method === "card" ? t("До 2 минут", "Up to 2 min") : transferDefaults.speedLabel,
   }
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 460)
+    const timer = window.setTimeout(() => setLoading(false), animationSettings.loaderMotion ? 420 : 80)
     return () => window.clearTimeout(timer)
-  }, [])
+  }, [animationSettings.loaderMotion])
+
+  useEffect(() => {
+    if (!availableContacts.some((item) => item.id === selectedContact) && availableContacts[0]) {
+      setSelectedContact(availableContacts[0].id)
+    }
+  }, [availableContacts, selectedContact])
 
   useEffect(() => {
     if (step !== "processing") return
@@ -156,9 +168,9 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
       setDirection(1)
       setShowReceipt(true)
       setStep("success")
-    }, 1900)
+    }, animationSettings.loaderMotion ? 1500 : 520)
     return () => window.clearTimeout(timer)
-  }, [step])
+  }, [step, animationSettings.loaderMotion])
 
   function goNext(nextStep: TransferStep) {
     setDirection(1)
@@ -172,22 +184,25 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
       return
     }
     setDirection(-1)
-    setStep(stepOrder[Math.max(0, currentIndex - 1)] === "processing" ? "review" : stepOrder[Math.max(0, currentIndex - 1)])
+    const previous = stepOrder[Math.max(0, currentIndex - 1)]
+    setStep(previous === "processing" ? "review" : previous)
   }
 
   function pressKey(key: string) {
     setAmountInput((current) => {
-      if (key === "⌫") return current.slice(0, -1) || "0"
-      if (key === "." && current.includes(".")) return current
-      const next = current === "0" && key !== "." ? key : current + key
-      return next.replace(/^0+(?=\d)/, "").slice(0, 9)
+      const input = amountInputRef.current
+      const start = input?.selectionStart ?? current.length
+      const end = input?.selectionEnd ?? current.length
+      const nextRaw = key === "⌫" ? `${current.slice(0, Math.max(0, start - 1))}${current.slice(end)}` : `${current.slice(0, start)}${key}${current.slice(end)}`
+      const next = sanitizeAmount(nextRaw)
+      const nextPosition = key === "⌫" ? Math.max(0, start - 1) : start + key.length
+      window.requestAnimationFrame(() => input?.setSelectionRange(Math.min(nextPosition, next.length), Math.min(nextPosition, next.length)))
+      return next || "0"
     })
   }
 
-  const canContinue =
-    method === "contact" ||
-    (method === "card" && cardNumber.replace(/\D/g, "").length >= 12) ||
-    (method === "phone" && phoneNumber.replace(/\D/g, "").length >= 7)
+  const canContinue = method === "contact" || (method === "card" && cardNumber.replace(/\D/g, "").length >= 12) || (method === "phone" && phoneNumber.replace(/\D/g, "").length >= 7)
+  const canReview = amount > 0 && (dailyLimit <= 0 || amount + draft.fee <= dailyLimit)
 
   return (
     <div className="min-h-svh bg-background neo-mobile-shell">
@@ -230,14 +245,14 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                       <div className="border-2 border-foreground bg-secondary p-4 pixel-shadow-sm">
                         {method === "contact" && (
                           <div className="grid gap-3 sm:grid-cols-2">
-                            {contacts.map((item) => (
+                            {availableContacts.map((item) => (
                               <button key={item.id} onClick={() => setSelectedContact(item.id)} className={cn("flex min-h-20 cursor-pointer items-center gap-3 border-2 p-3 text-left transition-all", selectedContact === item.id ? "border-foreground bg-accent pixel-shadow-sm" : "border-foreground bg-card hover:bg-secondary")}>
                                 <Avatar className="h-11 w-11 rounded-none border-2 border-foreground">
                                   <AvatarFallback className="rounded-none bg-primary font-pixel text-[10px] text-primary-foreground">{item.initials}</AvatarFallback>
                                 </Avatar>
                                 <span>
                                   <span className="block text-sm font-black text-foreground">{item.name}</span>
-                                  <span className="block text-xs text-muted-foreground">{item.handle} · VOXEL verified</span>
+                                  <span className="block text-xs text-muted-foreground">{item.handle} · {t("проверен VOXEL", "VOXEL verified")}</span>
                                 </span>
                               </button>
                             ))}
@@ -262,7 +277,7 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                       </div>
                     </div>
 
-                    <TransferInfoStrip />
+                    <TransferInfoStrip dailyLimit={dailyLimit} fee={configuredFee} speed={transferDefaults.speedLabel} />
 
                     <div className="mt-5 flex justify-end">
                       <PixelButton disabled={!canContinue} onClick={() => goNext("amount")} className="bg-primary text-primary-foreground">
@@ -278,9 +293,18 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
                       <div className="space-y-4">
                         <div className="border-2 border-foreground bg-secondary p-5 pixel-shadow-sm">
-                          <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("Сумма", "Amount")}</p>
-                          <p className="mt-3 text-5xl font-black tracking-tight text-foreground tabular-nums"><PixelAmount value={amount} /></p>
-                          <p className="mt-2 text-xs text-muted-foreground">{t("Доступно", "Available")}: {formatUsd(sourceAccount.balance)}</p>
+                          <label htmlFor="transfer-amount" className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("Сумма", "Amount")}</label>
+                          <input
+                            id="transfer-amount"
+                            ref={amountInputRef}
+                            value={amountInput}
+                            onChange={(event) => setAmountInput(sanitizeAmount(event.target.value) || "0")}
+                            inputMode="decimal"
+                            aria-label={t("Сумма перевода", "Transfer amount")}
+                            className="mt-3 w-full bg-transparent text-5xl font-black tracking-tight text-foreground outline-none tabular-nums caret-primary"
+                            data-cursor="text"
+                          />
+                          <p className="mt-2 text-xs text-muted-foreground">{t("Доступно", "Available")}: {formatUsd(sourceAccount.balance)} · {t("лимит", "limit")}: {formatUsd(dailyLimit)}</p>
                           <div className="mobile-number-pad mt-5">
                             {keypad.map((key) => <button key={key} type="button" onClick={() => pressKey(key)}>{key}</button>)}
                           </div>
@@ -297,8 +321,8 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                     </div>
 
                     <div className="mt-5 flex justify-end">
-                      <PixelButton disabled={amount <= 0} onClick={() => goNext("review")} className="bg-primary text-primary-foreground">
-                        {t("Проверить", "Review")}
+                      <PixelButton disabled={!canReview} onClick={() => goNext("review")} className="bg-primary text-primary-foreground">
+                        {canReview ? t("Проверить", "Review") : t("Сверх лимита", "Over limit")}
                         <ArrowRight className="h-4 w-4" />
                       </PixelButton>
                     </div>
@@ -306,12 +330,12 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
                 )}
 
                 {step === "review" && (
-                  <PixelCard eyebrow={t("Шаг 3", "Step 3")} title={t("Подтвердить перевод", "Confirm transfer")} action={<PixelStatus tone="warning">2FA ready</PixelStatus>}>
+                  <PixelCard eyebrow={t("Шаг 3", "Step 3")} title={t("Подтвердить перевод", "Confirm transfer")} action={<PixelStatus tone="warning">{t("2FA готова", "2FA ready")}</PixelStatus>}>
                     <TransferSummary record={draft} />
                     <div className="mt-5 grid gap-3 md:grid-cols-3">
-                      <InfoLine icon={ShieldCheck} label="Risk score" value={draft.riskScore} />
-                      <InfoLine icon={Wallet} label="Rail speed" value={draft.speed} />
-                      <InfoLine icon={BadgeCheck} label="Limit" value="Approved" />
+                      <InfoLine icon={ShieldCheck} label={t("Риск", "Risk score")} value={draft.riskScore} />
+                      <InfoLine icon={Wallet} label={t("Скорость", "Rail speed")} value={draft.speed} />
+                      <InfoLine icon={BadgeCheck} label={t("Лимит", "Limit")} value={formatUsd(dailyLimit)} />
                     </div>
                     <div className="mt-5 flex flex-wrap justify-between gap-3">
                       <PixelButton onClick={goBack}><ArrowLeft className="h-4 w-4" />{t("Назад", "Back")}</PixelButton>
@@ -345,11 +369,11 @@ export function TransferFlowPage({ transferId }: { transferId: string }) {
 }
 
 function TransferReceipt({ record, showReceipt, setShowReceipt, completed }: { record: TransferRecord; showReceipt: boolean; setShowReceipt: (value: boolean) => void; completed?: boolean }) {
-  const { t } = useAppPreferences()
+  const { t, animationSettings } = useAppPreferences()
   return (
     <div className="relative grid gap-5 lg:grid-cols-[1fr_340px]">
-      {completed && <TransferCelebration />}
-      <PixelCard eyebrow={record.status === "completed" ? t("Перевод выполнен", "Transfer completed") : t("Перевод ожидает", "Transfer pending")} title={record.status === "completed" ? t("Деньги переведены", "Money transferred") : t("Операция ожидает", "Operation is waiting")} action={<PixelStatus tone={record.status === "completed" ? "success" : "warning"}>{record.status}</PixelStatus>} className="receipt-glow-ring pixel-gradient">
+      {completed && animationSettings.celebrationEffects && <TransferCelebration />}
+      <PixelCard eyebrow={record.status === "completed" ? t("Перевод выполнен", "Transfer completed") : t("Перевод ожидает", "Transfer pending")} title={record.status === "completed" ? t("Деньги переведены", "Money transferred") : t("Операция ожидает", "Operation is waiting")} action={<PixelStatus tone={record.status === "completed" ? "success" : "warning"}>{record.status === "completed" ? t("Готово", "Completed") : t("Ожидает", "Pending")}</PixelStatus>} className="receipt-glow-ring pixel-gradient">
         <div className="flex min-h-72 flex-col items-center justify-center text-center">
           <span className="flex h-24 w-24 items-center justify-center rounded-[28px] border-2 border-foreground bg-primary text-primary-foreground pixel-shadow">
             <Check className="h-11 w-11" />
@@ -357,9 +381,9 @@ function TransferReceipt({ record, showReceipt, setShowReceipt, completed }: { r
           <p className="mt-6 text-4xl font-black tabular-nums text-foreground"><PixelAmount value={record.amount} /></p>
           <p className="mt-2 text-sm text-muted-foreground">{t("Отправлено получателю", "Sent to")} <span className="font-black text-foreground">{record.recipient}</span></p>
           <div className="mt-4 grid w-full max-w-md grid-cols-3 gap-2 text-xs">
-            <InfoPill label="Rail" value={record.bank} />
-            <InfoPill label="Speed" value={record.speed} />
-            <InfoPill label="Risk" value={record.riskScore} />
+            <InfoPill label={t("Канал", "Rail")} value={record.bank} />
+            <InfoPill label={t("Скорость", "Speed")} value={record.speed} />
+            <InfoPill label={t("Риск", "Risk")} value={record.riskScore} />
           </div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/" className="pixel-btn inline-flex cursor-pointer items-center justify-center gap-2 bg-primary px-4 py-2.5 font-pixel text-[10px] uppercase text-primary-foreground"><Home className="h-4 w-4" />{t("Главная", "Home")}</Link>
@@ -369,11 +393,11 @@ function TransferReceipt({ record, showReceipt, setShowReceipt, completed }: { r
         </div>
       </PixelCard>
 
-      <PixelCard title={t("Действия", "Operation controls")} eyebrow="Actions">
+      <PixelCard title={t("Действия", "Operation controls")} eyebrow={t("Операция", "Actions")}>
         <div className="grid gap-3">
-          <PixelButton className="w-full justify-between"><Download className="h-4 w-4" />PDF</PixelButton>
+          <PixelButton className="w-full justify-between"><Download className="h-4 w-4" />{t("Скачать PDF", "Download PDF")}</PixelButton>
           <PixelButton className="w-full justify-between"><Share2 className="h-4 w-4" />{t("Поделиться", "Share")}</PixelButton>
-          <PixelButton className="w-full justify-between"><Copy className="h-4 w-4" />ID</PixelButton>
+          <PixelButton className="w-full justify-between"><Copy className="h-4 w-4" />{t("Скопировать ID", "Copy ID")}</PixelButton>
         </div>
       </PixelCard>
 
@@ -400,11 +424,12 @@ function TransferSummary({ record }: { record: TransferRecord }) {
 }
 
 function DetailsGrid({ record, compact }: { record: TransferRecord; compact?: boolean }) {
-  const rows = [["Operation ID", record.operationCode], ["Created", record.createdAt], ["Source", record.source], ["Method", record.method], ["Bank rail", record.bank], ["Purpose", record.purpose], ["Fee", formatUsd(record.fee)], ["Total", formatUsd(record.amount + record.fee)], ["Speed", record.speed], ["Risk", record.riskScore]]
+  const { t } = useAppPreferences()
+  const rows = [[t("ID операции", "Operation ID"), record.operationCode], [t("Создано", "Created"), record.createdAt], [t("Счёт списания", "Source"), record.source], [t("Метод", "Method"), localizeMethod(record.method, t)], [t("Канал банка", "Bank rail"), record.bank], [t("Назначение", "Purpose"), record.purpose], [t("Комиссия", "Fee"), formatUsd(record.fee)], [t("Итого", "Total"), formatUsd(record.amount + record.fee)], [t("Скорость", "Speed"), record.speed], [t("Риск", "Risk"), record.riskScore]]
   return <div className={cn("grid gap-3", compact ? "text-sm" : "md:grid-cols-2")}>{rows.map(([label, value]) => <div key={label} className="border-2 border-foreground bg-card p-3"><p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 break-words text-sm font-black text-foreground">{value}</p></div>)}</div>
 }
 
-function MethodButton({ active, icon: Icon, label, onClick }: { active: boolean; icon: typeof UserRound; label: string; onClick: () => void }) {
+function MethodButton({ active, icon: Icon, label, onClick }: { active: boolean; icon: LucideIcon; label: string; onClick: () => void }) {
   return <button onClick={onClick} className={cn("flex cursor-pointer items-center gap-3 border-2 px-3 py-3 text-left text-sm font-black transition-all", active ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm" : "border-foreground bg-card text-foreground hover:bg-secondary")}><Icon className="h-4 w-4" />{label}</button>
 }
 
@@ -415,18 +440,20 @@ function ProgressBar({ step }: { step: TransferStep }) {
 }
 
 function TransferSkeleton() {
-  return <div className="grid gap-5 lg:grid-cols-[1fr_320px]"><PixelCard><div className="space-y-4"><PixelSkeleton className="h-8 w-1/3" /><PixelSkeleton className="h-44" /><div className="grid gap-3 sm:grid-cols-3"><PixelSkeleton className="h-20" /><PixelSkeleton className="h-20" /><PixelSkeleton className="h-20" /></div></div></PixelCard><PixelCard><div className="space-y-3"><PixelLoader variant="card" label="Loading" /><PixelSkeleton className="h-8" /><PixelSkeleton className="h-16" /></div></PixelCard></div>
+  const { t } = useAppPreferences()
+  return <div className="grid gap-5 lg:grid-cols-[1fr_320px]"><PixelCard><div className="space-y-4"><PixelSkeleton className="h-8 w-1/3" /><PixelSkeleton className="h-44" /><div className="grid gap-3 sm:grid-cols-3"><PixelSkeleton className="h-20" /><PixelSkeleton className="h-20" /><PixelSkeleton className="h-20" /></div></div></PixelCard><PixelCard><div className="space-y-3"><PixelLoader variant="card" label={t("Загрузка", "Loading")} /><PixelSkeleton className="h-8" /><PixelSkeleton className="h-16" /></div></PixelCard></div>
 }
 
-function TransferInfoStrip() {
-  return <div className="payment-stat-strip mt-5"><InfoPill label="2FA" value="Passkey" /><InfoPill label="Limit" value="$10k" /><InfoPill label="Fee" value="$0–0.35" /><InfoPill label="Speed" value="Instant" /></div>
+function TransferInfoStrip({ dailyLimit, fee, speed }: { dailyLimit: number; fee: number; speed: string }) {
+  const { t } = useAppPreferences()
+  return <div className="payment-stat-strip mt-5"><InfoPill label="2FA" value={t("Ключ доступа", "Passkey")} /><InfoPill label={t("Лимит", "Limit")} value={formatUsd(dailyLimit)} /><InfoPill label={t("Комиссия", "Fee")} value={formatUsd(fee)} /><InfoPill label={t("Скорость", "Speed")} value={speed} /></div>
 }
 
 function InfoPill({ label, value }: { label: string; value: string }) {
   return <div className="rounded-full border-2 border-foreground bg-card px-3 py-2 text-center pixel-shadow-sm"><p className="font-pixel text-[8px] uppercase text-muted-foreground">{label}</p><p className="mt-1 truncate text-xs font-black text-foreground">{value}</p></div>
 }
 
-function InfoLine({ icon: Icon, label, value }: { icon: typeof ShieldCheck; label: string; value: string }) {
+function InfoLine({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return <div className="flex items-center justify-between gap-3 border-2 border-foreground bg-secondary p-3"><span className="flex items-center gap-2 text-sm font-black text-foreground"><Icon className="h-4 w-4 text-primary" />{label}</span><span className="text-sm font-black text-foreground">{value}</span></div>
 }
 
@@ -434,8 +461,31 @@ function formatCard(value: string) {
   return value.replace(/\D/g, "").slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ")
 }
 
-function maskCard(value: string) {
+function maskCard(value: string, t: (ru: string, en: string) => string) {
   const digits = value.replace(/\D/g, "")
-  if (digits.length < 4) return "Card · ****"
-  return `Card · **** ${digits.slice(-4)}`
+  if (digits.length < 4) return t("Карта · ****", "Card · ****")
+  return `${t("Карта", "Card")} · **** ${digits.slice(-4)}`
+}
+
+function sanitizeAmount(value: string) {
+  const cleaned = value.replace(/,/g, ".").replace(/[^\d.]/g, "")
+  const [whole, ...rest] = cleaned.split(".")
+  const decimals = rest.join("").slice(0, 2)
+  const normalizedWhole = (whole || "0").replace(/^0+(?=\d)/, "")
+  return decimals.length > 0 || cleaned.includes(".") ? `${normalizedWhole}.${decimals}`.slice(0, 12) : normalizedWhole.slice(0, 12)
+}
+
+function localizeAccountName(name: string) {
+  const map: Record<string, string> = {
+    "Main account": "Основной счёт",
+    "Savings vault": "Накопительный сейф",
+    "VOXEL wallet": "VOXEL-кошелёк",
+  }
+  return map[name] ?? name
+}
+
+function localizeMethod(method: RecipientMethod, t: (ru: string, en: string) => string) {
+  if (method === "contact") return t("Контакт", "Contact")
+  if (method === "card") return t("Карта", "Card")
+  return t("Телефон", "Phone")
 }

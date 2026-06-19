@@ -3,14 +3,14 @@
 import NumberFlow from "@number-flow/react"
 import { useEffect, useMemo, useState } from "react"
 
-const usdFormatter = new Intl.NumberFormat("en-US", {
+const usdFormatter = new Intl.NumberFormat("ru-RU", {
   style: "currency",
   currency: "USD",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
+const numberFormatter = new Intl.NumberFormat("ru-RU", {
   maximumFractionDigits: 2,
 })
 
@@ -31,21 +31,12 @@ type Props = {
  * matches SSR output; NumberFlow mounts only after hydration, preventing the
  * client/server text mismatch that animated number libraries can trigger.
  */
-export function AnimatedAmount({
-  value,
-  className,
-  currency = true,
-  sign = false,
-  animateOnMount = false,
-  suffix,
-}: Props) {
+export function AnimatedAmount({ value, className, currency = true, sign = false, animateOnMount = false, suffix }: Props) {
   const [mounted, setMounted] = useState(false)
   const [display, setDisplay] = useState(value)
 
   const format: Intl.NumberFormatOptions = useMemo(() => {
-    const options: Intl.NumberFormatOptions = currency
-      ? { style: "currency", currency: "USD", maximumFractionDigits: 2 }
-      : { maximumFractionDigits: 2 }
+    const options: Intl.NumberFormatOptions = currency ? { style: "currency", currency: "USD", maximumFractionDigits: 2 } : { maximumFractionDigits: 2 }
     if (sign) options.signDisplay = "always"
     return options
   }, [currency, sign])
@@ -70,5 +61,5 @@ export function AnimatedAmount({
     return <span className={className}>{signed}{suffix}</span>
   }
 
-  return <NumberFlow value={display} format={format} suffix={suffix} className={className} />
+  return <NumberFlow locales="ru-RU" value={display} format={format} suffix={suffix} className={className} />
 }

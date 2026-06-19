@@ -28,7 +28,7 @@ export const bankingNavItems: BankingNavItem[] = [
   { id: "dashboard", label: "Главная", icon: LayoutDashboard },
   { id: "cards", label: "Карты", icon: CreditCard },
   { id: "payments", label: "Платежи", icon: ArrowLeftRight },
-  { id: "wallet", label: "BLOK Wallet", icon: Wallet },
+  { id: "wallet", label: "BLOK-кошелёк", icon: Wallet },
   { id: "savings", label: "Накопления", icon: PiggyBank },
   { id: "bills", label: "Счета", icon: Receipt },
 ]
@@ -56,7 +56,7 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
         <span className="font-pixel text-sm tracking-tight text-foreground">VOXEL</span>
       </div>
 
-      <nav className="mt-7 flex flex-col gap-1.5" aria-label="Main banking navigation">
+      <nav className="mt-7 flex flex-col gap-1.5" aria-label="Навигация банка">
         <p className="px-1 pb-2 font-pixel text-[9px] uppercase tracking-wider text-muted-foreground">Меню</p>
         {bankingNavItems.map((item) => {
           const Icon = item.icon
@@ -81,39 +81,20 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
       </nav>
 
       <div className="mt-auto flex flex-col gap-1.5">
-        <Link
-          href="/preferences"
-          className="flex cursor-pointer items-center gap-3 rounded-full border-2 border-transparent px-3 py-2.5 text-sm font-black text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground"
-        >
+        <Link href="/preferences" className="flex cursor-pointer items-center gap-3 rounded-full border-2 border-transparent px-3 py-2.5 text-sm font-black text-muted-foreground transition-all hover:border-foreground hover:bg-secondary hover:text-foreground">
           <SlidersHorizontal className="h-[18px] w-[18px]" />
           Настройки
         </Link>
 
-        <button
-          onClick={() => navigate("support")}
-          className={cn(
-            "flex cursor-pointer items-center gap-3 rounded-full border-2 px-3 py-2.5 text-sm font-black transition-all",
-            selected === "support"
-              ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm"
-              : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground",
-          )}
-          aria-current={selected === "support" ? "page" : undefined}
-        >
+        <button onClick={() => navigate("support")} className={cn("flex cursor-pointer items-center gap-3 rounded-full border-2 px-3 py-2.5 text-sm font-black transition-all", selected === "support" ? "border-foreground bg-primary text-primary-foreground pixel-shadow-sm" : "border-transparent text-muted-foreground hover:border-foreground hover:bg-secondary hover:text-foreground")} aria-current={selected === "support" ? "page" : undefined}>
           <LifeBuoy className="h-[18px] w-[18px]" />
           Поддержка
         </button>
 
         <div className="mt-3 rounded-[24px] border-2 border-foreground bg-accent p-4 pixel-shadow">
-          <p className="font-pixel text-[10px] uppercase leading-relaxed text-accent-foreground">Control center</p>
-          <p className="mt-2 text-xs leading-relaxed text-accent-foreground/80">
-            Тема, локализация, анимации, glow и курсор теперь живут в настройках.
-          </p>
-          <Link
-            href="/preferences"
-            className="pixel-btn mt-3 inline-flex w-full cursor-pointer justify-center bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground"
-          >
-            Открыть
-          </Link>
+          <p className="font-pixel text-[10px] uppercase leading-relaxed text-accent-foreground">Центр управления</p>
+          <p className="mt-2 text-xs leading-relaxed text-accent-foreground/80">Тема, локализация, анимации, glow, курсор, контакты и параметры переводов живут в настройках.</p>
+          <Link href="/preferences" className="pixel-btn mt-3 inline-flex w-full cursor-pointer justify-center bg-primary px-3 py-2 font-pixel text-[9px] uppercase text-primary-foreground">Открыть</Link>
         </div>
       </div>
     </aside>
