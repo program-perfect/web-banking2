@@ -11,6 +11,7 @@ import './globals.pr6-panel-fixes.css'
 import './globals.transfer-celebration-fix.css'
 import './globals.hover-pattern-motion.css'
 import './globals.performance-budget.css'
+import './globals.scene-theme.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({
@@ -24,8 +25,8 @@ const pressStart = Press_Start_2P({
 })
 
 export const metadata: Metadata = {
-  title: 'VOXEL — Pixel Banking',
-  description: 'A neo-brutalist pixel banking interface with transfers, settings, cursor controls and localized flows.',
+  title: 'VOXEL',
+  description: 'A neo-brutalist pixel interface with settings, cursor controls and localized flows.',
   generator: 'v0.app',
   icons: {
     icon: [
